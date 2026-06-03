@@ -244,3 +244,264 @@ flutter analyze no garantiza que la UX sea correcta.
 La documentación del proyecto debe vivir dentro del repositorio.
 
 No depender de conversaciones previas.
+
+---
+
+# Estado funcional actual
+
+Última actualización:
+
+Junio 2026
+
+---
+
+# Dashboard
+
+Estado:
+
+Funcional
+
+## Implementado
+
+* Header principal
+* Objetivo actual
+* Progreso de objetivo
+* Logros recientes
+* Próximo entrenamiento
+* Insights
+
+## Probado
+
+Sí
+
+## Observaciones
+
+* Objetivo editable desde Perfil
+* Logros recientes corregidos
+* Overflow corregido
+
+## Pendiente
+
+* Mejorar visualmente progreso hacia objetivo
+
+---
+
+# Perfil
+
+Estado:
+
+Funcional
+
+## Implementado
+
+* Datos de usuario
+* Objetivo editable
+
+Opciones:
+
+* Ganar músculo
+* Perder grasa
+* Fuerza
+* Mantenimiento
+
+## Probado
+
+Sí
+
+## Observaciones
+
+Los cambios se reflejan correctamente en Dashboard.
+
+---
+
+# Progreso
+
+Estado:
+
+Funcional
+
+## Implementado
+
+* Semana
+* Mes
+* Año
+* Peso corporal
+
+## Probado
+
+Sí
+
+## Observaciones
+
+Actualmente utiliza datos mock.
+
+---
+
+# Rutinas
+
+Estado:
+
+Parcialmente funcional
+
+## Implementado
+
+* Lista de rutinas
+* Visualización de días
+* Selección básica de día
+
+## Probado
+
+Parcialmente
+
+## Observaciones
+
+Existe incertidumbre sobre el comportamiento real de selección de día.
+
+Debe ser auditado nuevamente.
+
+## Pendiente
+
+* Creación manual de rutinas
+* Editor de rutinas
+* Validación completa del selector de día
+
+---
+
+# Entrenamiento
+
+Estado:
+
+Funcional
+
+## Implementado
+
+* WorkoutSessionStore
+
+* ActiveWorkoutSession
+
+* SessionExercise
+
+* SessionSet
+
+* SavedWorkoutSession
+
+* Cronómetro
+
+* Descanso configurable
+
+* Peso editable
+
+* Repeticiones editables
+
+* RIR editable
+
+* Estado:
+
+  * Preparación
+  * Entrenamiento activo
+  * Descanso
+  * Estoy listo
+  * Resumen
+
+## Probado
+
+Sí
+
+## Observaciones
+
+Actualmente la pantalla está centrada en un ejercicio activo.
+
+La arquitectura interna soporta múltiples ejercicios.
+
+La representación visual todavía no refleja un día completo.
+
+---
+
+# Resumen de entrenamiento
+
+Estado:
+
+Funcional
+
+## Implementado
+
+* Duración
+* Series
+* Volumen
+* Notas
+* Estado emocional
+
+## Probado
+
+Sí
+
+## Observaciones
+
+Todavía utiliza parte de información mock.
+
+---
+
+# Navegación
+
+Estado:
+
+Funcional
+
+## Implementado
+
+Protección de sesión activa.
+
+Mensaje:
+
+"Tienes un entrenamiento en curso"
+
+Opciones:
+
+* Continuar entrenamiento
+* Salir del entrenamiento
+
+## Probado
+
+Sí
+
+---
+
+# Git
+
+Estado:
+
+Completado
+
+## Implementado
+
+* Git local
+* GitHub
+* Versionado
+
+Repositorio:
+
+https://github.com/srdavidrobledo/Atlas
+
+## Probado
+
+Sí
+
+---
+
+# Estado general del MVP
+
+Completado:
+
+* infraestructura
+* navegación
+* entrenamiento básico
+* objetivos
+* progreso
+
+Pendiente:
+
+* día completo de entrenamiento
+* editor de rutinas
+* generación IA
+* persistencia real
+* historial real
