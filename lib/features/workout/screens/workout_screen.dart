@@ -34,6 +34,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   int? _currentRir;
   double _weightStep = 2.5;
   _WorkoutPhase _phase = _WorkoutPhase.preStart;
+  bool _showExerciseList = false;
 
   SessionExercise get _currentExercise => _session.exercises[_currentExerciseIndex];
 
@@ -243,6 +244,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   children: [
                     _buildExerciseHeader(exercise),
                     const SizedBox(height: 12),
+                    _buildExerciseList(),
+                    const SizedBox(height: 12),
                     _buildSessionStatus(exercise),
                     const SizedBox(height: 12),
                     _buildSuggestion(exercise),
@@ -342,6 +345,129 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           AtlasProgressBar(value: _session.progress, height: 5),
         ],
       ),
+    );
+  }
+
+  Widget _buildExerciseList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () => setState(() => _showExerciseList = !_showExerciseList),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF3F3F46), width: 0.5),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.fitness_center_rounded, size: 15, color: AppColors.primaryLight),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${_session.dayName} · ${_session.exerciseCount} ejercicios',
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  'Ejercicio ${_currentExerciseIndex + 1} de ${_session.exerciseCount}',
+                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryLight),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  _showExerciseList ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_showExerciseList) ...[
+          const SizedBox(height: 8),
+          ...List.generate(_session.exercises.length, (index) {
+            final exercise = _session.exercises[index];
+            final isActive = index == _currentExerciseIndex;
+            final isCompleted =
+                exercise.targetSets > 0 && exercise.completedSets == exercise.targetSets;
+
+            return GestureDetector(
+              onTap: _phase == _WorkoutPhase.preStart
+                  ? null
+                  : () => setState(() {
+                        _currentExerciseIndex = index;
+                        _syncToNextPendingSet();
+                      }),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.primary.withOpacity(0.12) : AppColors.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isActive
+                        ? AppColors.primaryLight.withOpacity(0.4)
+                        : const Color(0xFF3F3F46),
+                    width: 0.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      child: Center(
+                        child: isCompleted
+                            ? const Icon(Icons.check_circle_rounded,
+                                size: 16, color: AppColors.primaryLight)
+                            : isActive
+                                ? const Icon(Icons.play_arrow_rounded,
+                                    size: 16, color: AppColors.secondary)
+                                : Text(
+                                    '${index + 1}',
+                                    style: AppTextStyles.bodySmall
+                                        .copyWith(color: AppColors.textDisabled),
+                                  ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            exercise.name,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: isCompleted
+                                  ? AppColors.primaryLight
+                                  : isActive
+                                      ? AppColors.textPrimary
+                                      : AppColors.textSecondary,
+                              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                            ),
+                          ),
+                          Text(
+                            exercise.muscle,
+                            style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '${exercise.completedSets}/${exercise.targetSets} series',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: isCompleted ? AppColors.primaryLight : AppColors.textDisabled,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ],
     );
   }
 

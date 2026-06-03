@@ -352,3 +352,42 @@ Si la tarea ya existe:
 Si no existe:
 
 * proponer agregarla al backlog antes de implementarla.
+
+## Eficiencia de contexto
+
+Antes de comenzar cualquier tarea:
+
+1. Revisar BACKLOG.
+2. Verificar si la tarea ya fue implementada.
+3. Verificar si existe funcionalidad similar.
+4. No reimplementar funcionalidades existentes.
+
+Si una tarea fue completada:
+marcarla como completada.
+
+Si una tarea está parcialmente completada:
+indicar porcentaje estimado.
+
+Objetivo:
+evitar trabajo duplicado y consumo innecesario de contexto.
+
+## Auditoría obligatoria
+
+Antes de comenzar cualquier tarea:
+
+1. Revisar código existente.
+2. Revisar backlog.
+3. Revisar tareas completadas.
+4. Revisar tareas parciales.
+
+Nunca asumir que una tarea está pendiente.
+
+Indicar:
+
+- completado
+- parcial
+- pendiente
+
+Objetivo:
+
+Evitar implementar dos veces la misma funcionalidad.
