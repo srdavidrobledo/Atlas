@@ -26,13 +26,15 @@ class MockStats {
 class MockRoutineDay {
   final String id;
   final String name;
-  final int exerciseCount;
+  final List<MockExercise> exercises;
 
   const MockRoutineDay({
     required this.id,
     required this.name,
-    required this.exerciseCount,
+    required this.exercises,
   });
+
+  int get exerciseCount => exercises.length;
 }
 
 class MockRoutine {
@@ -54,6 +56,118 @@ class MockRoutine {
 }
 
 class MockData {
+  // Ejercicios por día — Push Pull Legs
+  static final List<MockExercise> _pushExercises = [
+    MockExercise(
+      name: 'Press de Banca',
+      muscle: 'Pecho · Barra',
+      sets: [
+        MockSet(kg: 75, reps: 4, rir: 2, done: true),
+        MockSet(kg: 75, reps: 4, rir: 2, done: true),
+        MockSet(kg: 75, reps: 0, rir: null, done: false),
+        MockSet(kg: 75, reps: 0, rir: null, done: false),
+      ],
+      prevKg: 72.5,
+      prevReps: 4,
+    ),
+    MockExercise(
+      name: 'Press Inclinado',
+      muscle: 'Pecho superior · Mancuernas',
+      sets: [
+        MockSet(kg: 32, reps: 0, rir: null, done: false),
+        MockSet(kg: 32, reps: 0, rir: null, done: false),
+        MockSet(kg: 32, reps: 0, rir: null, done: false),
+      ],
+      prevKg: 30,
+      prevReps: 10,
+    ),
+    MockExercise(
+      name: 'Aperturas',
+      muscle: 'Pecho · Mancuernas',
+      sets: [
+        MockSet(kg: 16, reps: 0, rir: null, done: false),
+        MockSet(kg: 16, reps: 0, rir: null, done: false),
+        MockSet(kg: 16, reps: 0, rir: null, done: false),
+      ],
+      prevKg: 16,
+      prevReps: 12,
+    ),
+  ];
+
+  static final List<MockExercise> _pullExercises = [
+    MockExercise(
+      name: 'Dominadas',
+      muscle: 'Espalda · Peso corporal',
+      sets: [
+        MockSet(kg: 0, reps: 0, rir: null, done: false),
+        MockSet(kg: 0, reps: 0, rir: null, done: false),
+        MockSet(kg: 0, reps: 0, rir: null, done: false),
+      ],
+      prevKg: 0,
+      prevReps: 8,
+    ),
+    MockExercise(
+      name: 'Remo con Barra',
+      muscle: 'Espalda · Barra',
+      sets: [
+        MockSet(kg: 70, reps: 0, rir: null, done: false),
+        MockSet(kg: 70, reps: 0, rir: null, done: false),
+        MockSet(kg: 70, reps: 0, rir: null, done: false),
+        MockSet(kg: 70, reps: 0, rir: null, done: false),
+      ],
+      prevKg: 67.5,
+      prevReps: 6,
+    ),
+    MockExercise(
+      name: 'Curl con Barra',
+      muscle: 'Bíceps · Barra',
+      sets: [
+        MockSet(kg: 40, reps: 0, rir: null, done: false),
+        MockSet(kg: 40, reps: 0, rir: null, done: false),
+        MockSet(kg: 40, reps: 0, rir: null, done: false),
+      ],
+      prevKg: 37.5,
+      prevReps: 10,
+    ),
+  ];
+
+  static final List<MockExercise> _legExercises = [
+    MockExercise(
+      name: 'Sentadilla',
+      muscle: 'Cuádriceps · Barra',
+      sets: [
+        MockSet(kg: 100, reps: 0, rir: null, done: false),
+        MockSet(kg: 100, reps: 0, rir: null, done: false),
+        MockSet(kg: 100, reps: 0, rir: null, done: false),
+        MockSet(kg: 100, reps: 0, rir: null, done: false),
+      ],
+      prevKg: 97.5,
+      prevReps: 5,
+    ),
+    MockExercise(
+      name: 'Prensa de Piernas',
+      muscle: 'Cuádriceps · Máquina',
+      sets: [
+        MockSet(kg: 160, reps: 0, rir: null, done: false),
+        MockSet(kg: 160, reps: 0, rir: null, done: false),
+        MockSet(kg: 160, reps: 0, rir: null, done: false),
+      ],
+      prevKg: 150,
+      prevReps: 10,
+    ),
+    MockExercise(
+      name: 'Extensión de Cuádriceps',
+      muscle: 'Cuádriceps · Máquina',
+      sets: [
+        MockSet(kg: 60, reps: 0, rir: null, done: false),
+        MockSet(kg: 60, reps: 0, rir: null, done: false),
+        MockSet(kg: 60, reps: 0, rir: null, done: false),
+      ],
+      prevKg: 57.5,
+      prevReps: 12,
+    ),
+  ];
+
   static final List<MockRoutine> routines = [
     MockRoutine(
       id: 'r1',
@@ -61,10 +175,10 @@ class MockData {
       isActive: true,
       totalSessions: 34,
       lastUsed: 'Hoy',
-      days: const [
-        MockRoutineDay(id: 'd1', name: 'Día A — Push', exerciseCount: 6),
-        MockRoutineDay(id: 'd2', name: 'Día B — Pull', exerciseCount: 6),
-        MockRoutineDay(id: 'd3', name: 'Día C — Piernas', exerciseCount: 7),
+      days: [
+        MockRoutineDay(id: 'd1', name: 'Día A — Push', exercises: _pushExercises),
+        MockRoutineDay(id: 'd2', name: 'Día B — Pull', exercises: _pullExercises),
+        MockRoutineDay(id: 'd3', name: 'Día C — Piernas', exercises: _legExercises),
       ],
     ),
     MockRoutine(
@@ -73,9 +187,9 @@ class MockData {
       isActive: false,
       totalSessions: 12,
       lastUsed: 'Hace 2 meses',
-      days: const [
-        MockRoutineDay(id: 'd4', name: 'Full Body A', exerciseCount: 8),
-        MockRoutineDay(id: 'd5', name: 'Full Body B', exerciseCount: 8),
+      days: [
+        MockRoutineDay(id: 'd4', name: 'Full Body A', exercises: []),
+        MockRoutineDay(id: 'd5', name: 'Full Body B', exercises: []),
       ],
     ),
     MockRoutine(
@@ -84,11 +198,11 @@ class MockData {
       isActive: false,
       totalSessions: 8,
       lastUsed: 'Hace 4 meses',
-      days: const [
-        MockRoutineDay(id: 'd6', name: 'Upper A', exerciseCount: 7),
-        MockRoutineDay(id: 'd7', name: 'Lower A', exerciseCount: 6),
-        MockRoutineDay(id: 'd8', name: 'Upper B', exerciseCount: 7),
-        MockRoutineDay(id: 'd9', name: 'Lower B', exerciseCount: 6),
+      days: [
+        MockRoutineDay(id: 'd6', name: 'Upper A', exercises: []),
+        MockRoutineDay(id: 'd7', name: 'Lower A', exercises: []),
+        MockRoutineDay(id: 'd8', name: 'Upper B', exercises: []),
+        MockRoutineDay(id: 'd9', name: 'Lower B', exercises: []),
       ],
     ),
   ];
@@ -133,44 +247,6 @@ class MockData {
       volume: '4.050 kg',
       sets: 18,
       feeling: '🙂',
-    ),
-  ];
-
-  // Datos del workout activo mock
-  static final List<MockExercise> workoutExercises = [
-    MockExercise(
-      name: 'Press de Banca',
-      muscle: 'Pecho · Barra',
-      sets: [
-        MockSet(kg: 75, reps: 4, rir: 2, done: true),
-        MockSet(kg: 75, reps: 4, rir: 2, done: true),
-        MockSet(kg: 75, reps: 0, rir: null, done: false),
-        MockSet(kg: 75, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 72.5,
-      prevReps: 4,
-    ),
-    MockExercise(
-      name: 'Press Inclinado',
-      muscle: 'Pecho superior · Mancuernas',
-      sets: [
-        MockSet(kg: 32, reps: 0, rir: null, done: false),
-        MockSet(kg: 32, reps: 0, rir: null, done: false),
-        MockSet(kg: 32, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 30,
-      prevReps: 10,
-    ),
-    MockExercise(
-      name: 'Aperturas',
-      muscle: 'Pecho · Mancuernas',
-      sets: [
-        MockSet(kg: 16, reps: 0, rir: null, done: false),
-        MockSet(kg: 16, reps: 0, rir: null, done: false),
-        MockSet(kg: 16, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 16,
-      prevReps: 12,
     ),
   ];
 

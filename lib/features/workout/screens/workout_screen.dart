@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/mock_data.dart';
 import '../../../shared/widgets/atlas_widgets.dart';
 import '../data/workout_session_store.dart';
 
@@ -65,6 +66,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   void _startWorkout() {
+    _session.started = true;
     setState(() => _phase = _WorkoutPhase.active);
     _startSessionTimer();
   }
@@ -137,6 +139,25 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
     _currentExerciseIndex = (_session.exercises.length - 1).clamp(0, _session.exercises.length);
     _currentSetIndex = (_currentExercise.sets.length - 1).clamp(0, _currentExercise.sets.length);
+    _loadCurrentSetValues();
+  }
+
+  // Navegación explícita por tap — busca el primer set pendiente dentro del ejercicio indicado
+  // sin sobreescribir con el primer pendiente global.
+  void _jumpToExercise(int exerciseIndex) {
+    final exercise = _session.exercises[exerciseIndex];
+    _currentExerciseIndex = exerciseIndex;
+
+    for (var setIndex = 0; setIndex < exercise.sets.length; setIndex++) {
+      if (!exercise.sets[setIndex].done) {
+        _currentSetIndex = setIndex;
+        _loadCurrentSetValues();
+        return;
+      }
+    }
+
+    // Todos los sets completados: apuntar al último set del ejercicio
+    _currentSetIndex = (exercise.sets.length - 1).clamp(0, exercise.sets.length);
     _loadCurrentSetValues();
   }
 
@@ -320,6 +341,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               ),
             ],
           ),
+          _buildDaySelector(),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -343,6 +365,103 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           ),
           const SizedBox(height: 6),
           AtlasProgressBar(value: _session.progress, height: 5),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDaySelector() {
+    final days = WorkoutSessionStore.activeRoutine.days;
+    if (days.length <= 1) return const SizedBox.shrink();
+
+    final isLocked = _phase != _WorkoutPhase.preStart;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        children: days.map((day) {
+          final isSelected = day.id == _session.dayId;
+          return ChoiceChip(
+            selected: isSelected,
+            label: Text(day.name),
+            onSelected: isSelected
+                ? null
+                : isLocked
+                    ? (_) => _showDayLockedDialog()
+                    : (_) => _changeDay(day),
+            labelStyle: AppTextStyles.bodySmall.copyWith(
+              color: isSelected
+                  ? AppColors.textPrimary
+                  : isLocked
+                      ? AppColors.textDisabled
+                      : AppColors.primaryLight,
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+            ),
+            selectedColor: AppColors.primary,
+            backgroundColor: AppColors.primary.withOpacity(0.1),
+            side: BorderSide(
+              color: isSelected
+                  ? AppColors.primaryLight
+                  : isLocked
+                      ? const Color(0xFF3F3F46)
+                      : AppColors.primary.withOpacity(0.3),
+              width: isSelected ? 1.2 : 0.5,
+            ),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  void _changeDay(MockRoutineDay newDay) {
+    _sessionTimer?.cancel();
+    _restTimer?.cancel();
+    WorkoutSessionStore.activeDay = newDay;
+    WorkoutSessionStore.activeSession = null;
+    final newSession = WorkoutSessionStore.startSession(
+      routine: WorkoutSessionStore.activeRoutine,
+      day: newDay,
+    );
+    setState(() {
+      _session = newSession;
+      _currentExerciseIndex = 0;
+      _currentSetIndex = 0;
+      _phase = _WorkoutPhase.preStart;
+      _elapsedSeconds = 0;
+      _restSeconds = 0;
+      _restFinished = false;
+      _showExerciseList = false;
+    });
+    _syncToNextPendingSet();
+  }
+
+  void _showDayLockedDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Entrenamiento en curso'),
+        content: Text(
+          'Tienes un entrenamiento activo en este día. Finalízalo antes de cambiar.',
+          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Continuar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _finishWorkout();
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Finalizar'),
+          ),
         ],
       ),
     );
@@ -397,10 +516,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             return GestureDetector(
               onTap: _phase == _WorkoutPhase.preStart
                   ? null
-                  : () => setState(() {
-                        _currentExerciseIndex = index;
-                        _syncToNextPendingSet();
-                      }),
+                  : () => setState(() => _jumpToExercise(index)),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

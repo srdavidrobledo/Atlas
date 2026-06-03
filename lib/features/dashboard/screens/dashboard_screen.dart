@@ -5,9 +5,29 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/router/route_names.dart';
 import '../../../shared/widgets/atlas_widgets.dart';
 import '../../../shared/mock_data.dart';
+import '../../workout/data/workout_session_store.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WorkoutSessionStore.onActiveDayChanged = () {
+      if (mounted) setState(() {});
+    };
+  }
+
+  @override
+  void dispose() {
+    WorkoutSessionStore.onActiveDayChanged = null;
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -286,6 +306,10 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _NextWorkoutCard(BuildContext context) {
+    final day = WorkoutSessionStore.activeDay;
+    final routine = WorkoutSessionStore.activeRoutine;
+    final exerciseCount = day.exerciseCount;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -304,17 +328,27 @@ class DashboardScreen extends StatelessWidget {
                       color: AppColors.success,
                       textColor: AppColors.success,
                     ),
+                    const Spacer(),
+                    Text(
+                      routine.name,
+                      style: AppTextStyles.bodySmall,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Día C — Piernas',
+                  day.name,
                   style: AppTextStyles.titleLarge,
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _NextStat(Icons.fitness_center_rounded, '7 ejercicios'),
+                    _NextStat(
+                      Icons.fitness_center_rounded,
+                      exerciseCount > 0
+                          ? '$exerciseCount ejercicios'
+                          : 'Sin ejercicios',
+                    ),
                     const SizedBox(width: 16),
                     _NextStat(Icons.timer_outlined, '~55 min'),
                   ],

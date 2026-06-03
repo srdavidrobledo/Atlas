@@ -15,13 +15,18 @@ class RoutinesScreen extends StatefulWidget {
 }
 
 class _RoutinesScreenState extends State<RoutinesScreen> {
-  String? _selectedDayId;
+  late String _selectedDayId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDayId = WorkoutSessionStore.activeDay.id;
+  }
 
   @override
   Widget build(BuildContext context) {
     final active = MockData.routines.where((r) => r.isActive).first;
     final others = MockData.routines.where((r) => !r.isActive).toList();
-    _selectedDayId ??= active.days.first.id;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -133,7 +138,10 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                     return ChoiceChip(
                       selected: isSelected,
                       label: Text(day.name),
-                      onSelected: (_) => setState(() => _selectedDayId = day.id),
+                      onSelected: (_) => setState(() {
+                        _selectedDayId = day.id;
+                        WorkoutSessionStore.activeDay = day;
+                      }),
                       labelStyle: AppTextStyles.bodySmall.copyWith(
                         color: isSelected ? AppColors.textPrimary : AppColors.primaryLight,
                         fontSize: 12,
@@ -399,6 +407,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     MockRoutine routine,
     MockRoutineDay day,
   ) {
+    WorkoutSessionStore.activeDay = day;
     WorkoutSessionStore.startSession(
       routine: routine,
       day: day,

@@ -1,5 +1,15 @@
 # Atlas
 
+## Definición de completado
+
+Una funcionalidad NO puede considerarse completada si:
+
+- existe pero no puede utilizarse
+- requiere un flujo alternativo para funcionar
+- contradice un requerimiento previamente aprobado
+
+La validación funcional tiene prioridad sobre la validación técnica.
+
 Aplicación Flutter orientada a entrenamiento físico, seguimiento de progreso y generación de rutinas.
 
 ---

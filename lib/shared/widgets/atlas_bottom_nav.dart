@@ -34,7 +34,7 @@ class AtlasScaffold extends StatelessWidget {
     if (index == currentIndex) return;
 
     final target = _indexToRoute(index);
-    final hasActiveSession = WorkoutSessionStore.activeSession != null;
+    final hasActiveSession = WorkoutSessionStore.activeSession?.started == true;
 
     if (!hasActiveSession || target == RouteNames.workout) {
       context.go(target);

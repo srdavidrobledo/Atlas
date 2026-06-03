@@ -1,8 +1,28 @@
+import 'package:flutter/foundation.dart';
 import '../../../shared/mock_data.dart';
 
 class WorkoutSessionStore {
   static ActiveWorkoutSession? activeSession;
   static SavedWorkoutSession? lastSavedSession;
+
+  // Fuente única de verdad para rutina y día seleccionados
+  static MockRoutine activeRoutine =
+      MockData.routines.firstWhere((r) => r.isActive);
+
+  static MockRoutineDay? _activeDay;
+
+  // Callback para notificar a oyentes cuando el día activo cambia
+  static VoidCallback? onActiveDayChanged;
+
+  static MockRoutineDay get activeDay {
+    _activeDay ??= activeRoutine.days.first;
+    return _activeDay!;
+  }
+
+  static set activeDay(MockRoutineDay day) {
+    _activeDay = day;
+    onActiveDayChanged?.call();
+  }
 
   static ActiveWorkoutSession startSession({
     required MockRoutine routine,
@@ -14,18 +34,23 @@ class WorkoutSessionStore {
       dayId: day.id,
       dayName: day.name,
       startedAt: DateTime.now(),
-      exercises: MockData.workoutExercises.map(SessionExercise.fromMock).toList(),
+      exercises: day.exercises.map(SessionExercise.fromMock).toList(),
     );
     activeSession = session;
     return session;
   }
 
   static ActiveWorkoutSession ensureSession() {
-    final activeRoutine = MockData.routines.firstWhere((routine) => routine.isActive);
+    if (activeSession != null) {
+      // Sesión ya iniciada → nunca descartarla
+      if (activeSession!.started) return activeSession!;
+      // Sesión preparada pero para otro día → descartarla
+      if (activeSession!.dayId != activeDay.id) activeSession = null;
+    }
     return activeSession ??
         startSession(
           routine: activeRoutine,
-          day: activeRoutine.days.first,
+          day: activeDay,
         );
   }
 
@@ -62,6 +87,7 @@ class ActiveWorkoutSession {
   final List<SessionExercise> exercises;
   DateTime? finishedAt;
   int elapsedSeconds;
+  bool started;
 
   ActiveWorkoutSession({
     required this.routineId,
@@ -72,6 +98,7 @@ class ActiveWorkoutSession {
     required this.exercises,
     this.finishedAt,
     this.elapsedSeconds = 0,
+    this.started = false,
   });
 
   int get exerciseCount => exercises.length;
