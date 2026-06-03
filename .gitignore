@@ -1,0 +1,14 @@
+.dart_tool/
+build/
+.pub/
+.packages
+
+.vscode/
+.idea/
+
+*.iml
+.codex-write-check.tmp
+.flutter-plugins-dependencies
+.flutter-plugins
+
+chrome-device/

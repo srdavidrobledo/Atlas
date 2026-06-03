@@ -1,0 +1,814 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/router/route_names.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/atlas_widgets.dart';
+import '../data/workout_session_store.dart';
+
+enum _WorkoutPhase { preStart, active, resting }
+
+class WorkoutScreen extends StatefulWidget {
+  const WorkoutScreen({super.key});
+
+  @override
+  State<WorkoutScreen> createState() => _WorkoutScreenState();
+}
+
+class _WorkoutScreenState extends State<WorkoutScreen> {
+  late ActiveWorkoutSession _session;
+
+  int _elapsedSeconds = 0;
+  Timer? _sessionTimer;
+
+  int _restSeconds = 0;
+  int _restTotal = 90;
+  Timer? _restTimer;
+  bool _restFinished = false;
+
+  int _currentExerciseIndex = 0;
+  int _currentSetIndex = 0;
+  double _currentKg = 0;
+  int _currentReps = 1;
+  int? _currentRir;
+  double _weightStep = 2.5;
+  _WorkoutPhase _phase = _WorkoutPhase.preStart;
+
+  SessionExercise get _currentExercise => _session.exercises[_currentExerciseIndex];
+
+  SessionSet get _currentSet => _currentExercise.sets[_currentSetIndex];
+
+  bool get _isResting => _phase == _WorkoutPhase.resting;
+
+  bool get _hasStarted => _phase != _WorkoutPhase.preStart || _elapsedSeconds > 0;
+
+  int get _completedExercises {
+    return _session.exercises.where((exercise) {
+      return exercise.targetSets > 0 && exercise.completedSets == exercise.targetSets;
+    }).length;
+  }
+
+  int get _pendingExercises => _session.exerciseCount - _completedExercises;
+
+  int get _currentSetNumber {
+    if (_currentExercise.sets.isEmpty) return 0;
+    return (_currentSetIndex + 1).clamp(1, _currentExercise.targetSets);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _session = WorkoutSessionStore.ensureSession();
+    _syncToNextPendingSet();
+  }
+
+  void _startWorkout() {
+    setState(() => _phase = _WorkoutPhase.active);
+    _startSessionTimer();
+  }
+
+  void _startSessionTimer() {
+    _sessionTimer?.cancel();
+    _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _elapsedSeconds++);
+    });
+  }
+
+  void _startRestTimer() {
+    _restTimer?.cancel();
+    setState(() {
+      _phase = _WorkoutPhase.resting;
+      _restFinished = false;
+      _restSeconds = _restTotal;
+    });
+
+    _restTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        if (_restSeconds > 0) {
+          _restSeconds--;
+        } else {
+          _restFinished = true;
+          _restTimer?.cancel();
+        }
+      });
+    });
+  }
+
+  void _skipRest() {
+    _restTimer?.cancel();
+    setState(() {
+      _restSeconds = 0;
+      _restFinished = true;
+    });
+  }
+
+  void _readyAfterRest() {
+    setState(() {
+      _phase = _WorkoutPhase.active;
+      _restFinished = false;
+      _restSeconds = 0;
+    });
+  }
+
+  void _setRestTotal(int seconds) {
+    setState(() {
+      _restTotal = seconds;
+      if (_isResting && !_restFinished && _restSeconds > seconds) {
+        _restSeconds = seconds;
+      }
+    });
+  }
+
+  void _syncToNextPendingSet() {
+    for (var exerciseIndex = 0; exerciseIndex < _session.exercises.length; exerciseIndex++) {
+      final exercise = _session.exercises[exerciseIndex];
+      for (var setIndex = 0; setIndex < exercise.sets.length; setIndex++) {
+        if (!exercise.sets[setIndex].done) {
+          _currentExerciseIndex = exerciseIndex;
+          _currentSetIndex = setIndex;
+          _loadCurrentSetValues();
+          return;
+        }
+      }
+    }
+
+    _currentExerciseIndex = (_session.exercises.length - 1).clamp(0, _session.exercises.length);
+    _currentSetIndex = (_currentExercise.sets.length - 1).clamp(0, _currentExercise.sets.length);
+    _loadCurrentSetValues();
+  }
+
+  bool _moveToNextPendingSet() {
+    for (var exerciseIndex = _currentExerciseIndex; exerciseIndex < _session.exercises.length; exerciseIndex++) {
+      final exercise = _session.exercises[exerciseIndex];
+      final startSet = exerciseIndex == _currentExerciseIndex ? _currentSetIndex + 1 : 0;
+      for (var setIndex = startSet; setIndex < exercise.sets.length; setIndex++) {
+        if (!exercise.sets[setIndex].done) {
+          setState(() {
+            _currentExerciseIndex = exerciseIndex;
+            _currentSetIndex = setIndex;
+            _loadCurrentSetValues();
+          });
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  void _loadCurrentSetValues() {
+    final set = _currentSet;
+    _currentKg = set.kg;
+    _currentReps = set.reps;
+    _currentRir = set.rir;
+  }
+
+  void _completeSet() {
+    if (_phase != _WorkoutPhase.active) return;
+
+    setState(() {
+      _currentSet
+        ..kg = _currentKg
+        ..reps = _currentReps
+        ..rir = _currentRir
+        ..done = true;
+    });
+
+    final hasNext = _moveToNextPendingSet();
+    if (hasNext) {
+      _startRestTimer();
+    }
+  }
+
+  void _toggleSetDone(int index, bool done) {
+    if (_phase == _WorkoutPhase.preStart) return;
+
+    setState(() {
+      final set = _currentExercise.sets[index];
+      if (done) {
+        set
+          ..kg = index == _currentSetIndex ? _currentKg : set.kg
+          ..reps = index == _currentSetIndex ? _currentReps : set.reps
+          ..rir = index == _currentSetIndex ? _currentRir : set.rir
+          ..done = true;
+      } else {
+        set.done = false;
+      }
+      _syncToNextPendingSet();
+    });
+  }
+
+  void _finishWorkout() {
+    _sessionTimer?.cancel();
+    _restTimer?.cancel();
+    WorkoutSessionStore.finishSession(elapsedSeconds: _elapsedSeconds);
+    context.go(RouteNames.workoutSummary);
+  }
+
+  String get _sessionTime {
+    final minutes = (_elapsedSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_elapsedSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  String get _restTimeDisplay {
+    final minutes = (_restSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_restSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  @override
+  void dispose() {
+    _sessionTimer?.cancel();
+    _restTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final exercise = _currentExercise;
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildExerciseHeader(exercise),
+                    const SizedBox(height: 12),
+                    _buildSessionStatus(exercise),
+                    const SizedBox(height: 12),
+                    _buildSuggestion(exercise),
+                    const SizedBox(height: 12),
+                    _buildSetsTable(exercise),
+                    const SizedBox(height: 14),
+                    _buildInputSection(),
+                    const SizedBox(height: 14),
+                    _buildWeightStepSelector(),
+                    const SizedBox(height: 14),
+                    _buildRirSection(),
+                    const SizedBox(height: 14),
+                    _buildRestSelector(),
+                    const SizedBox(height: 20),
+                    _buildPrimaryAction(),
+                    const SizedBox(height: 12),
+                    AtlasButton(
+                      label: 'Finalizar entrenamiento',
+                      variant: AtlasButtonVariant.outline,
+                      onTap: _finishWorkout,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (_isResting) _buildRestBar(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1C0E2E),
+        border: Border(bottom: BorderSide(color: Color(0xFF3D2260), width: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => _showExitDialog(),
+                child: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _session.dayName,
+                  style: AppTextStyles.titleMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+                ),
+                child: Text(
+                  _sessionTime,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.secondary,
+                    fontFamily: 'monospace',
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Ejercicio ${_currentExerciseIndex + 1} de ${_session.exerciseCount}',
+                  style: AppTextStyles.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                '${_session.completedSets} de ${_session.totalSets} series',
+                style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryLight),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$_completedExercises ejercicios completados · $_pendingExercises pendientes',
+            style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+          ),
+          const SizedBox(height: 6),
+          AtlasProgressBar(value: _session.progress, height: 5),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExerciseHeader(SessionExercise exercise) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(exercise.name, style: AppTextStyles.titleLarge),
+        const SizedBox(height: 2),
+        Text(exercise.muscle, style: AppTextStyles.bodySmall),
+      ],
+    );
+  }
+
+  Widget _buildSessionStatus(SessionExercise exercise) {
+    return AtlasCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              AtlasBadge(
+                label: 'Serie $_currentSetNumber de ${exercise.targetSets}',
+                color: AppColors.primaryLight,
+                textColor: AppColors.primaryLight,
+              ),
+              const Spacer(),
+              Text(
+                '${exercise.completedSets} de ${exercise.targetSets} completadas',
+                style: AppTextStyles.bodySmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          AtlasProgressBar(
+            value: exercise.targetSets == 0 ? 0 : exercise.completedSets / exercise.targetSets,
+            height: 5,
+            color: AppColors.primaryLight,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSuggestion(SessionExercise exercise) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.secondary.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.secondary.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.tips_and_updates_outlined, size: 16, color: AppColors.secondary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Objetivo: ${exercise.targetSets} series · ${exercise.suggestedKg.toStringAsFixed(1)} kg · ${exercise.suggestedReps} reps',
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSetsTable(SessionExercise exercise) {
+    return AtlasCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                SizedBox(width: 40, child: Text('SET', style: AppTextStyles.labelSmall)),
+                Expanded(child: Text('KG', style: AppTextStyles.labelSmall, textAlign: TextAlign.center)),
+                Expanded(child: Text('REPS', style: AppTextStyles.labelSmall, textAlign: TextAlign.center)),
+                Expanded(child: Text('RIR', style: AppTextStyles.labelSmall, textAlign: TextAlign.center)),
+                SizedBox(width: 40, child: Text('OK', style: AppTextStyles.labelSmall, textAlign: TextAlign.center)),
+              ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 0.5),
+          ...List.generate(exercise.sets.length, (index) {
+            final set = exercise.sets[index];
+            final isActive = index == _currentSetIndex && !set.done;
+            final isDone = set.done;
+
+            return Container(
+              decoration: BoxDecoration(
+                color: isActive ? AppColors.primary.withOpacity(0.08) : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 40,
+                      child: Center(
+                        child: isDone
+                            ? const Icon(Icons.check_rounded, size: 16, color: AppColors.primaryLight)
+                            : isActive
+                                ? const Icon(Icons.play_arrow_rounded, size: 16, color: AppColors.secondary)
+                                : Text(
+                                    '${index + 1}',
+                                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textDisabled),
+                                  ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _setKgLabel(set, isActive),
+                        style: _setTextStyle(isDone, isActive),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _setRepsLabel(set, isActive),
+                        style: _setTextStyle(isDone, isActive),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _setRirLabel(set, isActive),
+                        style: _setTextStyle(isDone, isActive),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 40,
+                      child: Checkbox(
+                        value: set.done,
+                        onChanged: _phase == _WorkoutPhase.preStart
+                            ? null
+                            : (value) => _toggleSetDone(index, value ?? false),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  TextStyle _setTextStyle(bool isDone, bool isActive) {
+    return AppTextStyles.bodyMedium.copyWith(
+      color: isDone
+          ? AppColors.primaryLight
+          : isActive
+              ? AppColors.textPrimary
+              : AppColors.textDisabled,
+      fontWeight: FontWeight.w600,
+    );
+  }
+
+  String _setKgLabel(SessionSet set, bool isActive) {
+    return isActive ? _currentKg.toStringAsFixed(1) : set.kg.toStringAsFixed(1);
+  }
+
+  String _setRepsLabel(SessionSet set, bool isActive) {
+    return isActive ? '$_currentReps' : '${set.reps}';
+  }
+
+  String _setRirLabel(SessionSet set, bool isActive) {
+    final rir = isActive ? _currentRir : set.rir;
+    return rir == null ? '-' : '$rir';
+  }
+
+  Widget _buildInputSection() {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PESO',
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.textSecondary,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(height: 8),
+              AtlasNumberPicker(
+                value: _currentKg,
+                step: _weightStep,
+                min: 0,
+                max: 400,
+                unit: 'kg',
+                showDecimals: true,
+                onChanged: (value) => setState(() => _currentKg = value),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'REPETICIONES',
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.textSecondary,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(height: 8),
+              AtlasNumberPicker(
+                value: _currentReps.toDouble(),
+                step: 1,
+                min: 1,
+                max: 99,
+                onChanged: (value) => setState(() => _currentReps = value.toInt()),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeightStepSelector() {
+    return _OptionSelector<double>(
+      label: 'INCREMENTO DE PESO',
+      options: const [1, 2.5, 5],
+      selected: _weightStep,
+      labelFor: (value) => '${value.toStringAsFixed(value == value.roundToDouble() ? 0 : 1)} kg',
+      onChanged: (value) => setState(() => _weightStep = value),
+    );
+  }
+
+  Widget _buildRirSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'RIR - REPETICIONES EN RESERVA',
+          style: AppTextStyles.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+            letterSpacing: 1.0,
+          ),
+        ),
+        const SizedBox(height: 8),
+        AtlasRirSelector(
+          selected: _currentRir,
+          onChanged: (value) => setState(() => _currentRir = value),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRestSelector() {
+    return _OptionSelector<int>(
+      label: 'DESCANSO ENTRE SERIES',
+      options: const [60, 90, 120, 180],
+      selected: _restTotal,
+      labelFor: (value) => '${value}s',
+      onChanged: _setRestTotal,
+    );
+  }
+
+  Widget _buildPrimaryAction() {
+    switch (_phase) {
+      case _WorkoutPhase.preStart:
+        return AtlasButton(
+          label: 'Comenzar entrenamiento',
+          icon: Icons.play_arrow_rounded,
+          onTap: _startWorkout,
+          height: 56,
+        );
+      case _WorkoutPhase.active:
+        return AtlasButton(
+          label: 'Completar serie',
+          onTap: _completeSet,
+          height: 56,
+        );
+      case _WorkoutPhase.resting:
+        return AtlasButton(
+          label: _restFinished ? 'Estoy listo' : 'Descansando',
+          variant: _restFinished ? AtlasButtonVariant.accent : AtlasButtonVariant.outline,
+          onTap: _restFinished ? _readyAfterRest : null,
+          height: 56,
+        );
+    }
+  }
+
+  Widget _buildRestBar() {
+    final progress = _restTotal == 0 ? 0.0 : _restSeconds / _restTotal;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: Color(0xFF3F3F46), width: 0.5)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                _restFinished ? 'DESCANSO TERMINADO' : 'DESCANSO',
+                style: AppTextStyles.labelSmall.copyWith(letterSpacing: 1.0),
+              ),
+              const Spacer(),
+              Text(
+                _restTimeDisplay,
+                style: AppTextStyles.labelLarge.copyWith(
+                  color: AppColors.secondary,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Proximo: ${_currentExercise.name} · Serie $_currentSetNumber de ${_currentExercise.targetSets}',
+            style: AppTextStyles.bodySmall,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          AtlasProgressBar(
+            value: progress,
+            height: 5,
+            color: AppColors.secondary,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _restFinished
+                      ? null
+                      : () => setState(() {
+                            _restSeconds = (_restSeconds + 30).clamp(0, 300);
+                          }),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 38),
+                    padding: EdgeInsets.zero,
+                    textStyle: AppTextStyles.bodySmall.copyWith(fontSize: 13),
+                  ),
+                  child: const Text('+30s'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _restFinished ? _readyAfterRest : _skipRest,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 38),
+                    padding: EdgeInsets.zero,
+                    foregroundColor: AppColors.secondary,
+                    side: const BorderSide(color: AppColors.secondary, width: 0.5),
+                    textStyle: AppTextStyles.bodySmall.copyWith(
+                      fontSize: 13,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                  child: Text(_restFinished ? 'Estoy listo' : 'Saltar'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showExitDialog() {
+    final title = _hasStarted || _session.completedSets > 0
+        ? 'Tienes un entrenamiento en curso'
+        : 'Salir del entrenamiento';
+    final content = _hasStarted || _session.completedSets > 0
+        ? 'Si sales ahora, el progreso quedara en memoria hasta que vuelvas al entrenamiento.'
+        : 'Todavia no comenzaste la sesion.';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(title),
+        content: Text(
+          content,
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Continuar entrenamiento'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.go(RouteNames.dashboard);
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Salir del entrenamiento'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OptionSelector<T> extends StatelessWidget {
+  final String label;
+  final List<T> options;
+  final T selected;
+  final String Function(T value) labelFor;
+  final ValueChanged<T> onChanged;
+
+  const _OptionSelector({
+    required this.label,
+    required this.options,
+    required this.selected,
+    required this.labelFor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+            letterSpacing: 1.0,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((option) {
+            final isSelected = option == selected;
+            return ChoiceChip(
+              selected: isSelected,
+              label: Text(labelFor(option)),
+              onSelected: (_) => onChanged(option),
+              labelStyle: AppTextStyles.bodySmall.copyWith(
+                color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+              selectedColor: AppColors.primary,
+              backgroundColor: AppColors.surface,
+              side: BorderSide(
+                color: isSelected ? AppColors.primaryLight : const Color(0xFF3F3F46),
+                width: isSelected ? 1.2 : 0.5,
+              ),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}
