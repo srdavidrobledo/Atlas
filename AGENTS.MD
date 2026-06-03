@@ -2,18 +2,169 @@
 
 Aplicación Flutter orientada a entrenamiento físico, seguimiento de progreso y generación de rutinas.
 
-## Arquitectura
+---
 
-- Flutter
-- Arquitectura feature-first
-- Estructura:
+# Arquitectura
+
+* Flutter
+* Arquitectura feature-first
+
+Estructura:
 
 lib/
 ├─ core/
 ├─ features/
 ├─ shared/
 
-## Reglas de trabajo
+---
+
+# Modo de trabajo obligatorio para Atlas
+
+Toda tarea debe dividirse en etapas numeradas.
+
+Formato obligatorio:
+
+ETAPA X/Y
+
+Objetivo:
+
+* ...
+
+Archivos afectados:
+
+* ...
+
+Verificación:
+
+* ...
+
+---
+
+Al finalizar cada etapa:
+
+1. Ejecutar flutter analyze.
+2. Informar:
+
+   * errores
+   * warnings
+   * infos
+3. Esperar aprobación.
+
+No continuar automáticamente a la siguiente etapa.
+
+---
+
+Cada etapa debe ser:
+
+* pequeña
+* auditable
+* reversible
+* fácilmente testeable
+
+Si una tarea requiere más de 5 archivos:
+
+* dividirla en varias etapas
+
+---
+
+Siempre informar:
+
+Progreso Atlas
+
+Etapa actual:
+X/Y
+
+Porcentaje completado:
+XX%
+
+Próxima etapa:
+...
+
+---
+
+# Registro obligatorio de tareas Atlas
+
+Antes de comenzar cualquier implementación:
+
+Mostrar siempre:
+
+BACKLOG ACTIVO
+
+Formato obligatorio:
+
+[x] TAREA-001 Nombre
+[ ] TAREA-002 Nombre
+
+---
+
+Reglas:
+
+* Nunca eliminar tareas del backlog.
+* Nunca asumir que una tarea está terminada.
+* Una tarea sólo puede marcarse como completada [x] cuando:
+
+  * la funcionalidad existe
+  * flutter analyze no tiene errores
+  * fue validada funcionalmente
+
+---
+
+Al inicio y final de cada respuesta informar:
+
+Progreso Atlas
+
+Completadas: X/Y
+Pendientes: Y/X
+
+Tareas completadas:
+
+* ...
+
+Tareas pendientes:
+
+* ...
+
+---
+
+# BACKLOG ACTIVO
+
+[x] TAREA-001 WorkoutSessionStore funcional
+
+[x] TAREA-002 Cronómetro de entrenamiento
+
+[x] TAREA-003 Descanso configurable
+
+[x] TAREA-004 Objetivos editables
+
+[x] TAREA-005 Protección al salir de una sesión activa
+
+[ ] TAREA-006 Workout = día completo de entrenamiento
+
+[ ] TAREA-007 Selección visual de día dentro de Workout
+
+[ ] TAREA-008 Creación manual de rutinas
+
+[ ] TAREA-009 Editor de rutinas
+
+[ ] TAREA-010 Rutinas generadas por IA
+
+[ ] TAREA-011 Persistencia local
+
+[ ] TAREA-012 Historial real de entrenamientos
+
+---
+
+Prioridad actual:
+
+1. TAREA-006 Workout = día completo
+2. TAREA-008 Creación manual de rutinas
+3. TAREA-009 Editor de rutinas
+4. TAREA-010 Rutinas IA
+5. TAREA-011 Persistencia local
+
+---
+
+# Reglas de trabajo
 
 Antes de modificar código:
 
@@ -22,97 +173,182 @@ Antes de modificar código:
 3. Mostrar archivos afectados.
 4. Esperar aprobación explícita.
 
-## Restricciones
+No modificar código antes de aprobación.
+
+---
+
+# Restricciones
 
 NO modificar sin aprobación:
 
-- router
-- theme
-- estructura de navegación
-- arquitectura general
+* router
+* theme
+* estructura de navegación
+* arquitectura general
 
-## Calidad
+---
+
+# Calidad
 
 Antes de finalizar cualquier tarea:
 
 1. Ejecutar flutter analyze.
-2. Informar errores, warnings e infos.
+2. Informar:
+
+   * errores
+   * warnings
+   * infos
 3. Mostrar resumen de cambios.
 
-## Workout
+---
+
+# Workout
 
 Mantener:
 
-- WorkoutSessionStore
-- ActiveWorkoutSession
-- SessionExercise
-- SessionSet
-- SavedWorkoutSession
+* WorkoutSessionStore
+* ActiveWorkoutSession
+* SessionExercise
+* SessionSet
+* SavedWorkoutSession
 
-No reemplazar WorkoutSessionStore por Firebase, Hive o Storage sin aprobación.
+No reemplazar estas estructuras sin aprobación.
 
-## Dashboard
+No reemplazar WorkoutSessionStore por:
+
+* Firebase
+* Hive
+* Storage
+* Repositories externos
+
+sin aprobación explícita.
+
+---
+
+# Flujo UX obligatorio de entrenamiento
+
+WorkoutScreen debe funcionar como:
+
+Preparación
+↓
+Comenzar entrenamiento
+↓
+Entrenamiento activo
+↓
+Descanso
+↓
+Confirmación "Estoy listo"
+↓
+Siguiente serie
+↓
+Resumen
+
+---
+
+Reglas:
+
+* Nunca iniciar automáticamente un entrenamiento al abrir WorkoutScreen.
+* El usuario debe confirmar explícitamente el inicio.
+* Si existe una sesión activa:
+
+  * no eliminarla automáticamente
+  * no reiniciarla automáticamente
+  * permitir recuperarla
+
+---
+
+# Dashboard
 
 Mantener diseño actual.
 
-No rediseñar visualmente sin aprobación.
+No rediseñar Dashboard sin aprobación.
 
-## Rutinas
+---
+
+# Rutinas
 
 Priorizar:
 
-- creación manual de rutinas
-- edición de rutinas
-- selección de días
-- entrenamiento basado en día completo
+* creación manual de rutinas
+* edición de rutinas
+* selección de días
+* entrenamiento basado en día completo
 
-## Entrenamiento
+---
+
+# Entrenamiento
 
 La pantalla Workout debe representar:
 
-- un día completo de entrenamiento
-- calentamiento
-- fuerza
-- accesorios
-- core
+* un día completo de entrenamiento
+* calentamiento
+* fuerza
+* accesorios
+* core
 
 No representar únicamente un ejercicio aislado.
 
 Mantener:
 
-- peso
-- reps
-- RIR
-- descanso configurable
-- cronómetro
-- progreso de sesión
+* peso
+* reps
+* RIR
+* descanso configurable
+* cronómetro
+* progreso de sesión
 
-## Tecnologías NO autorizadas actualmente
+---
+
+# Tecnologías NO autorizadas actualmente
 
 No implementar:
 
-- Firebase
-- IA real
-- Nutrición
-- Fotos de comida
-- Notificaciones
-- Tabata
-- Reportes avanzados
-- Persistencia local permanente
+* Firebase
+* IA real
+* Nutrición
+* Fotos de comida
+* Notificaciones
+* Tabata
+* Reportes avanzados
+* Persistencia local permanente
 
-## Git
+sin aprobación explícita.
+
+---
+
+# Git
 
 Trabajar siempre mediante cambios pequeños y auditables.
 
 Evitar modificaciones masivas.
 
-## Objetivo actual del proyecto
+Preferir:
+
+* cambios pequeños
+* commits pequeños
+* validaciones frecuentes
+
+---
+
+# Objetivo del proyecto
 
 Convertir Atlas de prototipo funcional a MVP de entrenamiento personal.
 
-Prioridad actual:
+Toda decisión técnica debe favorecer:
 
-1. Workout = día completo
-2. Editor de rutinas
-3. Rutinas generadas por IA
-4. Persistencia de datos
+* claridad
+* mantenibilidad
+* velocidad de iteración
+* facilidad para futuras integraciones
+
+Antes de comenzar cualquier nueva funcionalidad:
+
+Verificar el BACKLOG ACTIVO.
+
+Si la tarea ya existe:
+
+* continuarla
+
+Si no existe:
+
+* proponer agregarla al backlog antes de implementarla.
