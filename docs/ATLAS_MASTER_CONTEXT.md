@@ -505,3 +505,221 @@ Pendiente:
 * generación IA
 * persistencia real
 * historial real
+
+---
+
+# Arquitectura técnica actual
+
+## Organización general
+
+Atlas utiliza arquitectura Feature First.
+
+Estructura principal:
+
+lib/
+├─ core/
+├─ features/
+├─ shared/
+
+---
+
+# Core
+
+Responsabilidad:
+
+Infraestructura compartida.
+
+Incluye:
+
+* theme
+* router
+* constantes
+* configuración global
+
+Regla:
+
+No modificar sin aprobación explícita.
+
+---
+
+# Shared
+
+Responsabilidad:
+
+Elementos reutilizables.
+
+Incluye:
+
+* widgets compartidos
+* mock data
+* componentes comunes
+
+Ejemplos:
+
+* atlas_bottom_nav
+* atlas_widgets
+* mock_data
+
+---
+
+# Features
+
+Cada módulo funcional vive dentro de features.
+
+---
+
+## Dashboard
+
+Responsabilidad:
+
+Pantalla principal.
+
+Muestra:
+
+* objetivo actual
+* progreso
+* logros
+* insights
+* próximo entrenamiento
+
+---
+
+## Workout
+
+Responsabilidad:
+
+Gestión de sesiones de entrenamiento.
+
+Actualmente es el núcleo del MVP.
+
+---
+
+### Componentes importantes
+
+#### WorkoutSessionStore
+
+Responsabilidad:
+
+Mantener sesión activa.
+
+Debe seguir siendo el centro del sistema.
+
+No reemplazar sin aprobación.
+
+---
+
+#### ActiveWorkoutSession
+
+Representa:
+
+Entrenamiento activo en curso.
+
+---
+
+#### SessionExercise
+
+Representa:
+
+Ejercicio dentro de la sesión.
+
+---
+
+#### SessionSet
+
+Representa:
+
+Serie individual.
+
+Incluye:
+
+* peso
+* repeticiones
+* RIR
+* completado
+
+---
+
+#### SavedWorkoutSession
+
+Representa:
+
+Resumen de sesión finalizada.
+
+---
+
+# Estado arquitectónico actual
+
+La arquitectura ya soporta:
+
+* múltiples ejercicios
+* múltiples series
+* sesión activa
+
+La principal limitación actual es visual:
+
+WorkoutScreen todavía representa un ejercicio activo en lugar de representar un día completo.
+
+---
+
+# Deuda técnica conocida
+
+## DT-001
+
+WorkoutScreen no representa todavía un día completo.
+
+Prioridad:
+
+Alta.
+
+Relacionada con:
+
+TAREA-006
+
+---
+
+## DT-002
+
+Nueva rutina no fue auditada completamente.
+
+Prioridad:
+
+Alta.
+
+Relacionada con:
+
+TAREA-008
+
+---
+
+## DT-003
+
+Selector de día necesita validación funcional completa.
+
+Prioridad:
+
+Media.
+
+Relacionada con:
+
+TAREA-007
+
+---
+
+# Decisiones futuras
+
+Antes de implementar:
+
+* Firebase
+* IA real
+* Persistencia permanente
+
+deben completarse:
+
+TAREA-006
+TAREA-007
+TAREA-008
+TAREA-009
+
+Primero validar producto.
+
+Luego escalar infraestructura.
