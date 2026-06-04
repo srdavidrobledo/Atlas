@@ -6,6 +6,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/atlas_widgets.dart';
 import '../../../shared/mock_data.dart';
 import '../../workout/data/workout_session_store.dart';
+import '../data/routine_store.dart';
 
 class RoutinesScreen extends StatefulWidget {
   const RoutinesScreen({super.key});
@@ -25,8 +26,8 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final active = MockData.routines.where((r) => r.isActive).first;
-    final others = MockData.routines.where((r) => !r.isActive).toList();
+    final active = RoutineStore.active;
+    final others = RoutineStore.all.where((r) => r.id != active.id).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -285,21 +286,122 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AtlasButton(
-            label: 'Nueva rutina',
-            variant: AtlasButtonVariant.outline,
-            icon: Icons.add_rounded,
+          const AtlasSectionTitle(title: 'Crear nueva rutina'),
+          _buildCreationOption(
+            context,
+            icon: Icons.edit_note_rounded,
+            title: 'Manual',
+            subtitle: 'Crea tu rutina desde cero',
+            available: true,
             onTap: () => _showComingSoon(context),
           ),
-          const SizedBox(height: 10),
-          AtlasButton(
-            label: 'Importar desde foto',
-            variant: AtlasButtonVariant.ghost,
+          const SizedBox(height: 8),
+          _buildCreationOption(
+            context,
             icon: Icons.photo_camera_outlined,
+            title: 'Desde foto o PDF',
+            subtitle: 'Importa una rutina existente',
+            available: false,
+            onTap: () => _showComingSoon(context),
+          ),
+          const SizedBox(height: 8),
+          _buildCreationOption(
+            context,
+            icon: Icons.auto_awesome_rounded,
+            title: 'Generar con IA',
+            subtitle: 'Rutina personalizada según tus objetivos',
+            available: false,
             onTap: () => _showComingSoon(context),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCreationOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool available,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: available
+                ? AppColors.primary.withOpacity(0.35)
+                : const Color(0xFF3F3F46),
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: available
+                    ? AppColors.primary.withOpacity(0.15)
+                    : AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: available ? AppColors.primaryLight : AppColors.textDisabled,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: available
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            if (available)
+              const Icon(Icons.chevron_right_rounded,
+                  size: 18, color: AppColors.textSecondary)
+            else
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Próximamente',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.textDisabled,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -368,13 +470,16 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
   }
 
   void _showActivateDialog(BuildContext context, MockRoutine routine) {
+    final hasActiveSession = WorkoutSessionStore.activeSession?.started == true;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         title: Text('Activar ${routine.name}'),
         content: Text(
-          'Esta rutina reemplazará a Push Pull Legs como tu rutina activa.',
+          hasActiveSession
+              ? 'Tienes un entrenamiento en curso. Puedes activar esta rutina, pero el entrenamiento actual no se verá afectado hasta que lo finalices.'
+              : 'Esta rutina reemplazará a "${RoutineStore.active.name}" como tu rutina activa.',
           style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
         ),
         actions: [
@@ -383,7 +488,11 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () {
+              RoutineStore.activateRoutine(routine.id);
+              Navigator.pop(ctx);
+              setState(() {});
+            },
             child: const Text('Activar'),
           ),
         ],

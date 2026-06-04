@@ -35,7 +35,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   int? _currentRir;
   double _weightStep = 2.5;
   _WorkoutPhase _phase = _WorkoutPhase.preStart;
-  bool _showExerciseList = false;
   bool _inDayView = true;
 
   SessionExercise get _currentExercise => _session.exercises[_currentExerciseIndex];
@@ -273,6 +272,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_inDayView) return _buildDayView();
+    return _buildExerciseView();
+  }
+
+  Widget _buildExerciseView() {
     final exercise = _currentExercise;
 
     return Scaffold(
@@ -288,8 +292,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildExerciseHeader(exercise),
-                    const SizedBox(height: 12),
-                    _buildExerciseList(),
                     const SizedBox(height: 12),
                     _buildSessionStatus(exercise),
                     const SizedBox(height: 12),
@@ -311,6 +313,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       label: 'Finalizar entrenamiento',
                       variant: AtlasButtonVariant.outline,
                       onTap: _finishWorkout,
+                    ),
+                    const SizedBox(height: 8),
+                    AtlasButton(
+                      label: 'Ver todos los ejercicios',
+                      variant: AtlasButtonVariant.ghost,
+                      icon: Icons.list_rounded,
+                      onTap: _backToDayView,
                     ),
                   ],
                 ),
@@ -367,27 +376,29 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           ),
           _buildDaySelector(),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Ejercicio ${_currentExerciseIndex + 1} de ${_session.exerciseCount}',
-                  style: AppTextStyles.bodySmall,
-                  overflow: TextOverflow.ellipsis,
+          if (!_inDayView) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Ejercicio ${_currentExerciseIndex + 1} de ${_session.exerciseCount}',
+                    style: AppTextStyles.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              Text(
-                '${_session.completedSets} de ${_session.totalSets} series',
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryLight),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '$_completedExercises ejercicios completados · $_pendingExercises pendientes',
-            style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
-          ),
-          const SizedBox(height: 6),
+                Text(
+                  '${_session.completedSets} de ${_session.totalSets} series',
+                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryLight),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$_completedExercises ejercicios completados · $_pendingExercises pendientes',
+              style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+            ),
+            const SizedBox(height: 6),
+          ],
           AtlasProgressBar(value: _session.progress, height: 5),
         ],
       ),
@@ -458,7 +469,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       _elapsedSeconds = 0;
       _restSeconds = 0;
       _restFinished = false;
-      _showExerciseList = false;
       _inDayView = true;
     });
     _syncToNextPendingSet();
@@ -492,123 +502,154 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
-  Widget _buildExerciseList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: () => setState(() => _showExerciseList = !_showExerciseList),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF3F3F46), width: 0.5),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.fitness_center_rounded, size: 15, color: AppColors.primaryLight),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${_session.dayName} · ${_session.exerciseCount} ejercicios',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text(
-                  'Ejercicio ${_currentExerciseIndex + 1} de ${_session.exerciseCount}',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryLight),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  _showExerciseList ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-                  size: 18,
-                  color: AppColors.textSecondary,
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (_showExerciseList) ...[
-          const SizedBox(height: 8),
-          ...List.generate(_session.exercises.length, (index) {
-            final exercise = _session.exercises[index];
-            final isActive = index == _currentExerciseIndex;
-            final isCompleted =
-                exercise.targetSets > 0 && exercise.completedSets == exercise.targetSets;
-
-            return GestureDetector(
-              onTap: _phase == _WorkoutPhase.preStart
-                  ? null
-                  : () => setState(() => _jumpToExercise(index)),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isActive ? AppColors.primary.withOpacity(0.12) : AppColors.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isActive
-                        ? AppColors.primaryLight.withOpacity(0.4)
-                        : const Color(0xFF3F3F46),
-                    width: 0.5,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      child: Center(
-                        child: isCompleted
-                            ? const Icon(Icons.check_circle_rounded,
-                                size: 16, color: AppColors.primaryLight)
-                            : isActive
-                                ? const Icon(Icons.play_arrow_rounded,
-                                    size: 16, color: AppColors.secondary)
-                                : Text(
-                                    '${index + 1}',
-                                    style: AppTextStyles.bodySmall
-                                        .copyWith(color: AppColors.textDisabled),
-                                  ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            exercise.name,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: isCompleted
-                                  ? AppColors.primaryLight
-                                  : isActive
-                                      ? AppColors.textPrimary
-                                      : AppColors.textSecondary,
-                              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                            ),
+  Widget _buildDayView() {
+    final isStarted = _session.started;
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // Resumen del día
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${_session.exerciseCount} ejercicios',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
                           ),
-                          Text(
-                            exercise.muscle,
-                            style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('·',
+                            style: AppTextStyles.bodySmall
+                                .copyWith(color: AppColors.textDisabled)),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${_session.totalSets} series',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '${exercise.completedSets}/${exercise.targetSets} series',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: isCompleted ? AppColors.primaryLight : AppColors.textDisabled,
-                      ),
+                  ),
+                  // Lista completa de ejercicios
+                  ...List.generate(
+                    _session.exercises.length,
+                    (index) => _buildExerciseListItem(index),
+                  ),
+                  const SizedBox(height: 20),
+                  // Botón principal
+                  AtlasButton(
+                    label: isStarted
+                        ? 'Continuar entrenamiento'
+                        : 'Comenzar entrenamiento',
+                    icon: Icons.play_arrow_rounded,
+                    onTap: isStarted ? () => _goToExercise(_currentExerciseIndex) : _startWorkout,
+                    height: 56,
+                  ),
+                  if (isStarted) ...[
+                    const SizedBox(height: 8),
+                    AtlasButton(
+                      label: 'Finalizar entrenamiento',
+                      variant: AtlasButtonVariant.outline,
+                      onTap: _finishWorkout,
                     ),
                   ],
-                ),
+                  const SizedBox(height: 12),
+                ],
               ),
-            );
-          }),
-        ],
-      ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExerciseListItem(int index) {
+    final exercise = _session.exercises[index];
+    final isActive = index == _currentExerciseIndex;
+    final isCompleted =
+        exercise.targetSets > 0 && exercise.completedSets == exercise.targetSets;
+
+    return GestureDetector(
+      onTap: () => _goToExercise(index),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.primary.withOpacity(0.12) : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive
+                ? AppColors.primaryLight.withOpacity(0.4)
+                : const Color(0xFF3F3F46),
+            width: isActive ? 1.0 : 0.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 28,
+              child: Center(
+                child: isCompleted
+                    ? const Icon(Icons.check_circle_rounded,
+                        size: 18, color: AppColors.primaryLight)
+                    : isActive
+                        ? const Icon(Icons.play_arrow_rounded,
+                            size: 18, color: AppColors.secondary)
+                        : Text(
+                            '${index + 1}',
+                            style: AppTextStyles.bodySmall
+                                .copyWith(color: AppColors.textDisabled),
+                          ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    exercise.name,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: isCompleted
+                          ? AppColors.primaryLight
+                          : isActive
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    exercise.muscle,
+                    style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '${exercise.completedSets}/${exercise.targetSets} series',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isCompleted ? AppColors.primaryLight : AppColors.textDisabled,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 16,
+              color: isActive ? AppColors.primaryLight : AppColors.textDisabled,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
