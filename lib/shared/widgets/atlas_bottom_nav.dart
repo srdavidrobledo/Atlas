@@ -5,12 +5,15 @@ import '../../core/theme/app_text_styles.dart';
 import '../../core/router/route_names.dart';
 import '../../features/workout/data/workout_session_store.dart';
 
+enum _NavAction { continueWorkout, pause, abandon }
+
 class AtlasScaffold extends StatelessWidget {
   final Widget child;
   const AtlasScaffold({super.key, required this.child});
 
   int _locationToIndex(String location) {
     if (location.startsWith(RouteNames.progress)) return 1;
+    if (location.startsWith(RouteNames.workout)) return 2;
     if (location.startsWith(RouteNames.routines)) return 3;
     if (location.startsWith(RouteNames.profile)) return 4;
     return 0;
@@ -41,33 +44,44 @@ class AtlasScaffold extends StatelessWidget {
       return;
     }
 
-    final shouldLeave = await showDialog<bool>(
+    final action = await showDialog<_NavAction>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         title: const Text('Tienes un entrenamiento en curso'),
         content: Text(
-          'Puedes continuar entrenando o salir sin borrar el progreso guardado en esta sesión.',
+          'Puedes continuar, pausar y volver después, o abandonar el entrenamiento.',
           style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(ctx, false);
-              context.go(RouteNames.workout);
-            },
+            onPressed: () => Navigator.pop(ctx, _NavAction.continueWorkout),
             child: const Text('Continuar entrenamiento'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Salir del entrenamiento'),
+            onPressed: () => Navigator.pop(ctx, _NavAction.pause),
+            child: const Text('Pausar y salir'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, _NavAction.abandon),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Abandonar entrenamiento'),
           ),
         ],
       ),
     );
 
-    if (shouldLeave == true && context.mounted) {
-      context.go(target);
+    if (!context.mounted) return;
+    switch (action) {
+      case _NavAction.continueWorkout:
+        context.go(RouteNames.workout);
+      case _NavAction.pause:
+        context.go(target);
+      case _NavAction.abandon:
+        WorkoutSessionStore.activeSession = null;
+        context.go(target);
+      case null:
+        break;
     }
   }
 

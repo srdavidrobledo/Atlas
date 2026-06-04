@@ -62,6 +62,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   void initState() {
     super.initState();
     _session = WorkoutSessionStore.ensureSession();
+    _elapsedSeconds = _session.elapsedSeconds;
+    if (_session.started) {
+      _phase = _WorkoutPhase.active;
+      _startSessionTimer();
+    }
     _syncToNextPendingSet();
   }
 
@@ -74,7 +79,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   void _startSessionTimer() {
     _sessionTimer?.cancel();
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _elapsedSeconds++);
+      if (mounted) {
+        setState(() => _elapsedSeconds++);
+        _session.elapsedSeconds = _elapsedSeconds;
+      }
     });
   }
 

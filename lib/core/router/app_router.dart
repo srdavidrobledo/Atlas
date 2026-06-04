@@ -24,6 +24,10 @@ final appRouter = GoRouter(
           pageBuilder: (context, state) => const NoTransitionPage(child: ProgressScreen()),
         ),
         GoRoute(
+          path: RouteNames.workout,
+          pageBuilder: (context, state) => const NoTransitionPage(child: WorkoutScreen()),
+        ),
+        GoRoute(
           path: RouteNames.routines,
           pageBuilder: (context, state) => const NoTransitionPage(child: RoutinesScreen()),
         ),
@@ -32,10 +36,6 @@ final appRouter = GoRouter(
           pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),
         ),
       ],
-    ),
-    GoRoute(
-      path: RouteNames.workout,
-      builder: (context, state) => const WorkoutScreen(),
     ),
     GoRoute(
       path: RouteNames.workoutSummary,

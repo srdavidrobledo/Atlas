@@ -41,17 +41,12 @@ class WorkoutSessionStore {
   }
 
   static ActiveWorkoutSession ensureSession() {
-    if (activeSession != null) {
-      // Sesión ya iniciada → nunca descartarla
-      if (activeSession!.started) return activeSession!;
-      // Sesión preparada pero para otro día → descartarla
-      if (activeSession!.dayId != activeDay.id) activeSession = null;
-    }
-    return activeSession ??
-        startSession(
-          routine: activeRoutine,
-          day: activeDay,
-        );
+    // activeSession siempre tiene prioridad sobre activeDay
+    if (activeSession != null) return activeSession!;
+    return startSession(
+      routine: activeRoutine,
+      day: activeDay,
+    );
   }
 
   static void finishSession({required int elapsedSeconds}) {
