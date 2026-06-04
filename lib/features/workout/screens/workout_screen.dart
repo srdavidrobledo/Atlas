@@ -36,6 +36,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   double _weightStep = 2.5;
   _WorkoutPhase _phase = _WorkoutPhase.preStart;
   bool _showExerciseList = false;
+  bool _inDayView = true;
 
   SessionExercise get _currentExercise => _session.exercises[_currentExerciseIndex];
 
@@ -65,6 +66,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _elapsedSeconds = _session.elapsedSeconds;
     if (_session.started) {
       _phase = _WorkoutPhase.active;
+      _inDayView = false;
       _startSessionTimer();
     }
     _syncToNextPendingSet();
@@ -72,7 +74,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   void _startWorkout() {
     _session.started = true;
-    setState(() => _phase = _WorkoutPhase.active);
+    setState(() {
+      _phase = _WorkoutPhase.active;
+      _inDayView = false;
+    });
     _startSessionTimer();
   }
 
@@ -167,6 +172,17 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     // Todos los sets completados: apuntar al último set del ejercicio
     _currentSetIndex = (exercise.sets.length - 1).clamp(0, exercise.sets.length);
     _loadCurrentSetValues();
+  }
+
+  void _goToExercise(int exerciseIndex) {
+    setState(() {
+      _jumpToExercise(exerciseIndex);
+      _inDayView = false;
+    });
+  }
+
+  void _backToDayView() {
+    setState(() => _inDayView = true);
   }
 
   bool _moveToNextPendingSet() {
@@ -443,6 +459,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       _restSeconds = 0;
       _restFinished = false;
       _showExerciseList = false;
+      _inDayView = true;
     });
     _syncToNextPendingSet();
   }
