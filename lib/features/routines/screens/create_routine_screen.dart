@@ -73,7 +73,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   bool get _canSave =>
       _nameController.text.trim().isNotEmpty && _days.isNotEmpty;
 
-  void _save() {
+  Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty || _days.isEmpty) return;
 
@@ -106,6 +106,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         ),
       );
     }
+    await RoutineStore.persistRoutines();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

@@ -23,6 +23,51 @@ class MockStats {
   static const int streak = 2; // semanas
 }
 
+class MockSet {
+  final double kg;
+  final int reps;
+  final int? rir;
+  final bool done;
+  const MockSet({required this.kg, required this.reps, this.rir, required this.done});
+
+  Map<String, dynamic> toJson() => {'kg': kg, 'reps': reps, 'rir': rir, 'done': done};
+
+  factory MockSet.fromJson(Map<String, dynamic> m) => MockSet(
+    kg: (m['kg'] as num).toDouble(),
+    reps: m['reps'] as int,
+    rir: m['rir'] as int?,
+    done: m['done'] as bool,
+  );
+}
+
+class MockExercise {
+  final String name;
+  final String muscle;
+  final List<MockSet> sets;
+  final double prevKg;
+  final int prevReps;
+  const MockExercise({
+    required this.name, required this.muscle, required this.sets,
+    required this.prevKg, required this.prevReps,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'muscle': muscle,
+    'sets': sets.map((s) => s.toJson()).toList(),
+    'prevKg': prevKg,
+    'prevReps': prevReps,
+  };
+
+  factory MockExercise.fromJson(Map<String, dynamic> m) => MockExercise(
+    name: m['name'] as String,
+    muscle: m['muscle'] as String,
+    sets: (m['sets'] as List).map((s) => MockSet.fromJson(Map<String, dynamic>.from(s as Map))).toList(),
+    prevKg: (m['prevKg'] as num).toDouble(),
+    prevReps: m['prevReps'] as int,
+  );
+}
+
 class MockRoutineDay {
   final String id;
   final String name;
@@ -35,6 +80,18 @@ class MockRoutineDay {
   });
 
   int get exerciseCount => exercises.length;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'exercises': exercises.map((e) => e.toJson()).toList(),
+  };
+
+  factory MockRoutineDay.fromJson(Map<String, dynamic> m) => MockRoutineDay(
+    id: m['id'] as String,
+    name: m['name'] as String,
+    exercises: (m['exercises'] as List).map((e) => MockExercise.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
+  );
 }
 
 class MockRoutine {
@@ -53,6 +110,23 @@ class MockRoutine {
     required this.totalSessions,
     required this.lastUsed,
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'days': days.map((d) => d.toJson()).toList(),
+    'totalSessions': totalSessions,
+    'lastUsed': lastUsed,
+  };
+
+  factory MockRoutine.fromJson(Map<String, dynamic> m) => MockRoutine(
+    id: m['id'] as String,
+    name: m['name'] as String,
+    isActive: false,
+    days: (m['days'] as List).map((d) => MockRoutineDay.fromJson(Map<String, dynamic>.from(d as Map))).toList(),
+    totalSessions: m['totalSessions'] as int,
+    lastUsed: m['lastUsed'] as String,
+  );
 }
 
 class MockData {
@@ -281,22 +355,3 @@ class MockWorkoutHistory {
   });
 }
 
-class MockExercise {
-  final String name;
-  final String muscle;
-  final List<MockSet> sets;
-  final double prevKg;
-  final int prevReps;
-  const MockExercise({
-    required this.name, required this.muscle, required this.sets,
-    required this.prevKg, required this.prevReps,
-  });
-}
-
-class MockSet {
-  final double kg;
-  final int reps;
-  final int? rir;
-  final bool done;
-  const MockSet({required this.kg, required this.reps, this.rir, required this.done});
-}

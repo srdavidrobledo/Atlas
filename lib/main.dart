@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/router/app_router.dart';
+import 'core/storage/atlas_storage.dart';
 import 'core/theme/app_theme.dart';
+import 'features/routines/data/routine_store.dart';
+import 'features/workout/data/workout_session_store.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await AtlasStorage.init();
+  await WorkoutSessionStore.init();
+  await RoutineStore.init();
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

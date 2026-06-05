@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/atlas_widgets.dart';
 import '../../../shared/mock_data.dart';
+import '../../workout/data/workout_session_store.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -438,46 +439,113 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Widget _buildHistorySection() {
+    final realSessions = WorkoutSessionStore.sessions;
+    final useMock = realSessions.isEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AtlasSectionTitle(title: 'Historial reciente'),
-        ...MockData.history.map((w) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            child: AtlasCard(
-              child: Row(
+        AtlasSectionTitle(
+          title: useMock ? 'Historial reciente (demo)' : 'Historial reciente',
+        ),
+        if (useMock)
+          ...MockData.history.map((w) => _buildMockHistoryCard(w))
+        else
+          ...realSessions.take(10).map((s) => _buildRealHistoryCard(s)),
+      ],
+    );
+  }
+
+  Widget _buildMockHistoryCard(MockWorkoutHistory w) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: AtlasCard(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(w.date, style: AppTextStyles.bodySmall),
-                        const SizedBox(height: 2),
-                        Text(w.day, style: AppTextStyles.titleMedium),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(w.duration, style: AppTextStyles.bodySmall),
-                            const SizedBox(width: 12),
-                            Text(w.volume, style: AppTextStyles.bodySmall),
-                            const SizedBox(width: 12),
-                            Text(
-                              '${w.sets} sets',
-                              style: AppTextStyles.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  Text(w.date, style: AppTextStyles.bodySmall),
+                  const SizedBox(height: 2),
+                  Text(w.day, style: AppTextStyles.titleMedium),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(w.duration, style: AppTextStyles.bodySmall),
+                      const SizedBox(width: 12),
+                      Text(w.volume, style: AppTextStyles.bodySmall),
+                      const SizedBox(width: 12),
+                      Text('${w.sets} sets', style: AppTextStyles.bodySmall),
+                    ],
                   ),
-                  Text(w.feeling, style: const TextStyle(fontSize: 28)),
                 ],
               ),
             ),
-          );
-        }),
-      ],
+            Text(w.feeling, style: const TextStyle(fontSize: 28)),
+          ],
+        ),
+      ),
     );
+  }
+
+  Widget _buildRealHistoryCard(SavedWorkoutSession s) {
+    final duration = _formatDuration(s.durationSeconds);
+    final volume = s.totalVolume >= 1000
+        ? '${(s.totalVolume / 1000).toStringAsFixed(1)}t'
+        : '${s.totalVolume.toStringAsFixed(0)} kg';
+    final date = _formatDate(s.savedAt);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: AtlasCard(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(date, style: AppTextStyles.bodySmall),
+                  const SizedBox(height: 2),
+                  Text(s.dayName, style: AppTextStyles.titleMedium),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(duration, style: AppTextStyles.bodySmall),
+                      const SizedBox(width: 12),
+                      Text(volume, style: AppTextStyles.bodySmall),
+                      const SizedBox(width: 12),
+                      Text(
+                        '${s.completedSets} sets',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              s.feeling ?? '😐',
+              style: const TextStyle(fontSize: 28),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _formatDuration(int seconds) {
+    final m = (seconds ~/ 60).toString().padLeft(2, '0');
+    final s = (seconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  static String _formatDate(DateTime dt) {
+    const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const meses = [
+      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+    ];
+    return '${dias[dt.weekday - 1]} ${dt.day} ${meses[dt.month - 1]}';
   }
 }
