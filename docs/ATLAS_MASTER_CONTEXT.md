@@ -245,7 +245,7 @@ No depender de conversaciones previas.
 
 Última actualización:
 
-Junio 2026
+Junio 2026 — v1.7
 
 ---
 
@@ -345,9 +345,21 @@ Funcional
 * Creación manual de rutinas (nombre, días, ejercicios)
 * Catálogo de ejercicios con búsqueda por grupo muscular
 * Selección múltiple y "seleccionar todos" en catálogo
-* Activar rutina activa
-* Eliminar rutinas (excepto la activa)
+* Activar / eliminar rutinas (no se puede eliminar la activa)
 * Persistencia completa en Hive
+* **Edición completa de rutinas (EditRoutineScreen):**
+  * Renombrar rutina (inline en AppBar)
+  * Duplicar rutina
+  * Eliminar rutina con confirmación
+  * Agregar / renombrar / eliminar días
+  * Reordenar días con drag handle
+  * Agregar ejercicios (picker con búsqueda y filtros)
+  * Eliminar y reordenar ejercicios
+  * Editar series × reps por ejercicio
+* **Importación de rutinas:**
+  * Texto libre → RoutineParser → vista previa → guardar
+  * PDF con texto seleccionable → extraer → parsear → guardar
+  * Foto / imagen → OCR (ML Kit, Android + iOS) → texto editable → parsear → guardar
 
 ## Probado
 
@@ -355,7 +367,7 @@ Sí
 
 ## Pendiente
 
-* Editar rutinas existentes
+Ninguno crítico.
 
 ---
 
@@ -497,12 +509,15 @@ Completado:
 * progress con datos reales
 * récords históricos por ejercicio
 * Atlas Coach Lite (insights automáticos sin IA)
+* RoutineParser (texto libre → rutina)
+* importación PDF
+* importación por foto/OCR (Android + iOS, ML Kit)
+* edición completa de rutinas (renombrar, duplicar, eliminar, días, ejercicios, sets/reps)
 
 Pendiente:
 
-* TAREA-013 importación de rutinas externas (texto → rutina, luego OCR)
-* editor de rutinas existentes
-* Firebase / autenticación
+* Firebase / autenticación (TAREA-018, no iniciar sin aprobación)
+* Rutinas generadas por IA real (TAREA-019, depende de Firebase)
 
 ---
 
@@ -697,17 +712,31 @@ Estado: Resuelto (TAREA-014, TAREA-015, TAREA-016, TAREA-017).
 
 No existe flujo de importación de rutinas externas.
 
-Prioridad: Alta.
+Estado: Resuelto (TAREA-013).
 
-Relacionada con: TAREA-013.
+---
+
+## DT-006
+
+Rutinas no eran editables tras crearlas.
+
+Estado: Resuelto (TAREA-013D — EditRoutineScreen).
 
 ---
 
 # Decisiones futuras
 
-Antes de implementar Firebase o IA real debe completarse:
+El MVP mobile está completo en funcionalidad core:
 
-* TAREA-013 Importación de rutinas externas (Fase 1 → texto, Fase 2 → OCR)
+* entrenamiento
+* rutinas (crear, editar, importar)
+* historial y progreso reales
+* insights automáticos
 
-El producto ya tiene datos reales en todas las pantallas.
-El siguiente paso de valor es permitir al usuario traer sus rutinas desde afuera.
+Antes de implementar Firebase o IA real:
+
+1. Validar flujo completo en dispositivo físico Android / iOS
+2. Completar TAREA-018 Firebase / autenticación
+3. Luego TAREA-019 rutinas por IA
+
+Target oficial: **Android ✅ iPhone ✅**. Web solo para desarrollo.

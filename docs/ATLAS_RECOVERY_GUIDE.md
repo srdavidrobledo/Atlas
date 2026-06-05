@@ -33,13 +33,14 @@ Leer en este orden:
 
 # Estado actual
 
-Atlas se encuentra en v1.6.
+Atlas se encuentra en v1.7.
 
-MVP completo: persistencia, datos reales en todas las pantallas, insights automáticos.
+MVP mobile completo: persistencia, datos reales en todas las pantallas, insights automáticos, importación de rutinas (texto/PDF/foto), edición completa de rutinas.
 
-Actualmente el foco está en:
+**Target:** Android ✅ iPhone ✅. Web solo para desarrollo.
 
-TAREA-013 — Importación de rutinas externas (texto → rutina → OCR)
+Las tareas de importación y edición de rutinas están completadas.
+El siguiente bloque de valor es Firebase / autenticación (TAREA-018), no iniciar sin aprobación.
 
 ---
 
@@ -145,16 +146,12 @@ No implementar todavía:
 
 # Próximo objetivo del proyecto
 
-TAREA-013 — Importación de rutinas externas:
+TAREA-018 — Firebase / autenticación (no iniciar sin aprobación explícita)
 
-1. Fase 1: Motor texto libre → MockRoutine
-2. Fase 2: OCR foto/PDF → texto
-3. Fase 3: pipeline completo
-
-Luego:
-
-* editor de rutinas existentes
-* Firebase / autenticación
+Completado en v1.7:
+- RoutineParser + importación texto / PDF / foto (OCR mobile)
+- EditRoutineScreen: edición completa de rutinas (días, ejercicios, sets/reps, reordenar, duplicar, eliminar)
+- Fix parser: keywords de días requieren palabra completa (push/pull no coinciden con pullover/pushdown)
 
 ---
 

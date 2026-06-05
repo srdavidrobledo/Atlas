@@ -45,13 +45,24 @@ Notas: WorkoutSessionStore.sessions alimenta la pantalla de historial.
 
 ## TAREA-013
 Importación de rutinas externas
-Estado: Activa — siguiente tarea
-Prioridad: Alta
+Estado: Completado
+Notas:
+- Fase 1 ✅ RoutineParser: texto libre → MockRoutine, fuzzy matching contra ExerciseCatalog
+- Fase 2a ✅ PDF con texto seleccionable → ImportRoutinePdfScreen
+- Fase 2b ✅ OCR mobile-first con google_mlkit_text_recognition → ImportRoutineImageScreen (Android + iOS)
+- Fase 2c ❌ PDFs escaneados / imágenes web (descartado: Atlas es mobile-first)
+- Fase 3 ✅ Pipeline completo: imagen/PDF → texto → editable → parseo → vista previa → guardar
 
-Fases:
-- Fase 1: Motor texto libre → MockRoutine (detectar días, ejercicios, sets/reps; mapear contra ExerciseCatalog; crear ejercicios nuevos si no existen en catálogo)
-- Fase 2: OCR — foto o PDF → texto estructurado
-- Fase 3: OCR → Motor de importación (pipeline completo)
+## TAREA-013D
+Edición completa de rutinas
+Estado: Completado
+Notas:
+- Renombrar / duplicar / eliminar rutina
+- Agregar / renombrar / eliminar / reordenar días
+- Agregar / eliminar / reordenar ejercicios
+- Editar sets × reps inline
+- Persistencia completa en Hive
+- Fix parser: "Pullover en polea 3x12" ya no detectado como cabecera de día
 
 ## TAREA-014
 Dashboard con datos reales
@@ -72,3 +83,13 @@ Notas: PR detection cronológica, badge 🏆 en historial, ranking "Mayor progre
 Atlas Coach Lite
 Estado: Completado
 Notas: AtlasCoach en lib/shared/ genera hasta 6 insights dinámicos: días desde último entreno, frecuencia semanal, duración promedio, progreso reciente (highlight), mejor evolución histórica, motivacional por racha. Sin IA externa.
+
+## TAREA-018
+Firebase / autenticación
+Estado: Pendiente — no iniciar sin aprobación explícita
+Dependencia: MVP mobile validado
+
+## TAREA-019
+Rutinas generadas por IA real
+Estado: Pendiente — no iniciar sin aprobación explícita
+Dependencia: Firebase / autenticación (TAREA-018)
