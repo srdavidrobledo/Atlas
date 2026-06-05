@@ -5,7 +5,54 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/router/route_names.dart';
 import '../../../shared/widgets/atlas_widgets.dart';
 import '../../../shared/mock_data.dart';
+import '../../../shared/atlas_coach.dart';
 import '../../workout/data/workout_session_store.dart';
+
+class _DashboardStats {
+  final List<SavedWorkoutSession> sessions;
+  const _DashboardStats(this.sessions);
+
+  bool get isEmpty => sessions.isEmpty;
+
+  int get totalSessions => sessions.length;
+
+  int get sessionsThisWeek {
+    final now = DateTime.now();
+    final weekStart = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
+    return sessions.where((s) => !s.savedAt.isBefore(weekStart)).length;
+  }
+
+  String get hoursThisMonth {
+    final now = DateTime.now();
+    final monthStart = DateTime(now.year, now.month, 1);
+    final secs = sessions
+        .where((s) => !s.savedAt.isBefore(monthStart))
+        .fold(0, (sum, s) => sum + s.durationSeconds);
+    final h = secs ~/ 3600;
+    final m = (secs % 3600) ~/ 60;
+    if (h == 0 && m == 0) return '0m';
+    if (h == 0) return '${m}m';
+    if (m == 0) return '${h}h';
+    return '${h}h ${m}m';
+  }
+
+  int get streak {
+    if (sessions.isEmpty) return 0;
+    final now = DateTime.now();
+    int count = 0;
+    for (var offset = 0; offset >= -52; offset--) {
+      final monday = DateTime(now.year, now.month, now.day)
+          .subtract(Duration(days: now.weekday - 1 + (-offset * 7)));
+      final sunday = monday.add(const Duration(days: 7));
+      if (!sessions.any((s) => !s.savedAt.isBefore(monday) && s.savedAt.isBefore(sunday))) break;
+      count++;
+    }
+    return count;
+  }
+
+  SavedWorkoutSession? get lastSession => sessions.isEmpty ? null : sessions.first;
+}
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -31,6 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final stats = _DashboardStats(WorkoutSessionStore.sessions);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -38,10 +86,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           slivers: [
             SliverToBoxAdapter(child: _Header()),
             SliverToBoxAdapter(child: _GoalCard()),
-            SliverToBoxAdapter(child: _StatsRow()),
-            SliverToBoxAdapter(child: _AchievementsSection()),
+            SliverToBoxAdapter(child: _StatsRow(stats)),
+            SliverToBoxAdapter(child: _AchievementsSection(stats)),
             SliverToBoxAdapter(child: _NextWorkoutCard(context)),
-            SliverToBoxAdapter(child: _InsightsSection()),
+            SliverToBoxAdapter(child: _InsightsSection(stats)),
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
@@ -182,7 +230,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _StatsRow() {
+  Widget _StatsRow(_DashboardStats stats) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
@@ -198,7 +246,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: '${MockStats.weekSessions}',
+                          text: '${stats.sessionsThisWeek}',
                           style: AppTextStyles.numericLarge.copyWith(
                             color: AppColors.secondary,
                           ),
@@ -213,10 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'entrenamientos',
-                    style: AppTextStyles.bodySmall,
-                  ),
+                  Text('entrenamientos', style: AppTextStyles.bodySmall),
                 ],
               ),
             ),
@@ -230,16 +275,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text('Este mes', style: AppTextStyles.labelSmall),
                   const SizedBox(height: 8),
                   Text(
-                    MockStats.totalHours,
+                    stats.hoursThisMonth,
                     style: AppTextStyles.numericLarge.copyWith(
                       color: AppColors.primaryLight,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'horas entrenadas',
-                    style: AppTextStyles.bodySmall,
-                  ),
+                  Text('entrenado', style: AppTextStyles.bodySmall),
                 ],
               ),
             ),
@@ -249,12 +291,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _AchievementsSection() {
+  Widget _AchievementsSection(_DashboardStats stats) {
+    final last = stats.lastSession;
+    final lastLabel = last == null
+        ? 'Sin sesiones aún'
+        : '${last.dayName}\n${last.durationSeconds ~/ 60} min';
     final items = [
-      _AchievementData('🏆', 'Nuevo récord', 'Press Inclinado\n72.5 kg × 4'),
-      _AchievementData('📈', 'Más volumen', '+12%\nvs semana anterior'),
-      _AchievementData('🔥', 'Constancia', '${MockStats.streak} sem. consecutivas'),
-      _AchievementData('⚡', 'Esta semana', '${MockStats.weekSessions} de ${MockUser.weeklyDays} días'),
+      _AchievementData('🏋️', 'Total', '${stats.totalSessions} entrenos'),
+      _AchievementData('🔥', 'Racha', '${stats.streak} sem. consecutivas'),
+      _AchievementData('⚡', 'Esta semana', '${stats.sessionsThisWeek} de ${MockUser.weeklyDays} días'),
+      _AchievementData('📅', 'Último entreno', lastLabel),
     ];
 
     return Column(
@@ -378,28 +424,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _InsightsSection() {
-    final insights = [
-      _InsightData(
-        '📊',
-        'Tu mejor ejercicio este mes fue **Press Inclinado**. Progresaste +7.5 kg en 4 semanas.',
-      ),
-      _InsightData(
-        '🔥',
-        'Llevas **${MockStats.streak} semanas consecutivas** entrenando. Vas camino a tu mejor racha.',
-      ),
-      _InsightData(
-        '🏋️',
-        'El volumen total de esta semana fue **+12%** respecto a la semana anterior.',
-      ),
-    ];
+  Widget _InsightsSection(_DashboardStats stats) {
+    final insights = AtlasCoach.generate(WorkoutSessionStore.sessions);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AtlasSectionTitle(title: 'Insights'),
+        const AtlasSectionTitle(title: 'Atlas Coach'),
         ...insights.map(
-          (i) => Padding(
+          (insight) => Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
             child: AtlasCard(
               child: Row(
@@ -413,13 +446,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
-                      child: Text(i.emoji, style: const TextStyle(fontSize: 17)),
+                      child: Text(
+                        insight.emoji,
+                        style: const TextStyle(fontSize: 17),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: _RichInsightText(i.text),
-                  ),
+                  Expanded(child: _RichInsightText(insight.body)),
                 ],
               ),
             ),
@@ -465,8 +499,3 @@ class _AchievementData {
   const _AchievementData(this.emoji, this.title, this.subtitle);
 }
 
-class _InsightData {
-  final String emoji;
-  final String text;
-  const _InsightData(this.emoji, this.text);
-}
