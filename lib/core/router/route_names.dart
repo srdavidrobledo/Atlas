@@ -4,5 +4,6 @@ class RouteNames {
   static const String workout = '/workout';
   static const String workoutSummary = '/workout/summary';
   static const String routines = '/routines';
+  static const String createRoutine = '/routines/create';
   static const String profile = '/profile';
 }

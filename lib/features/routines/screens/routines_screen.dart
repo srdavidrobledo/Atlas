@@ -54,7 +54,10 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
             child: Text('Rutinas', style: AppTextStyles.displayMedium),
           ),
           OutlinedButton.icon(
-            onPressed: () => _showComingSoon(context),
+            onPressed: () async {
+              await context.push(RouteNames.createRoutine);
+              if (mounted) setState(() {});
+            },
             icon: const Icon(Icons.add_rounded, size: 18),
             label: const Text('Nueva'),
             style: OutlinedButton.styleFrom(
@@ -295,7 +298,10 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
             title: 'Manual',
             subtitle: 'Crea tu rutina desde cero',
             available: true,
-            onTap: () => _showComingSoon(context),
+            onTap: () async {
+              await context.push(RouteNames.createRoutine);
+              if (mounted) setState(() {});
+            },
           ),
           const SizedBox(height: 8),
           _buildCreationOption(

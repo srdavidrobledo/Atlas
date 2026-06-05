@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/workout/screens/workout_screen.dart';
@@ -6,6 +5,7 @@ import '../../features/workout/screens/workout_summary_screen.dart';
 import '../../features/progress/screens/progress_screen.dart';
 import '../../features/routines/screens/routines_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/routines/screens/create_routine_screen.dart';
 import '../../shared/widgets/atlas_bottom_nav.dart';
 import 'route_names.dart';
 
@@ -40,6 +40,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: RouteNames.workoutSummary,
       builder: (context, state) => const WorkoutSummaryScreen(),
+    ),
+    GoRoute(
+      path: RouteNames.createRoutine,
+      builder: (context, state) => const CreateRoutineScreen(),
     ),
   ],
 );
