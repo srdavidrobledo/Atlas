@@ -33,15 +33,13 @@ Leer en este orden:
 
 # Estado actual
 
-Atlas se encuentra en v1.4.
+Atlas se encuentra en v1.6.
 
-MVP funcional con persistencia validada.
+MVP completo: persistencia, datos reales en todas las pantallas, insights automáticos.
 
 Actualmente el foco está en:
 
-TAREA-014 — Dashboard con datos reales
-TAREA-015 — ProgressScreen con datos reales
-TAREA-016 — Récords históricos por ejercicio
+TAREA-013 — Importación de rutinas externas (texto → rutina → OCR)
 
 ---
 
@@ -147,17 +145,16 @@ No implementar todavía:
 
 # Próximo objetivo del proyecto
 
-Completar en orden:
+TAREA-013 — Importación de rutinas externas:
 
-1. TAREA-014 — Dashboard con datos reales (WorkoutSessionStore.sessions)
-2. TAREA-015 — ProgressScreen con datos reales (gráficos fl_chart)
-3. TAREA-016 — Récords históricos por ejercicio
+1. Fase 1: Motor texto libre → MockRoutine
+2. Fase 2: OCR foto/PDF → texto
+3. Fase 3: pipeline completo
 
-Antes de avanzar hacia:
+Luego:
 
-* TAREA-013 importación de rutinas externas
 * editor de rutinas existentes
-* Firebase / IA
+* Firebase / autenticación
 
 ---
 

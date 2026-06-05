@@ -55,6 +55,34 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
           ),
           OutlinedButton.icon(
             onPressed: () async {
+              await context.push(RouteNames.importRoutineImage);
+              if (mounted) setState(() {});
+            },
+            icon: const Icon(Icons.camera_alt_outlined, size: 18),
+            label: const Text('Foto'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 38),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              textStyle: AppTextStyles.labelLarge.copyWith(fontSize: 13),
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: () async {
+              await context.push(RouteNames.importRoutineText);
+              if (mounted) setState(() {});
+            },
+            icon: const Icon(Icons.text_snippet_outlined, size: 18),
+            label: const Text('Importar'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 38),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              textStyle: AppTextStyles.labelLarge.copyWith(fontSize: 13),
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: () async {
               await context.push(RouteNames.createRoutine);
               if (mounted) setState(() {});
             },
@@ -306,11 +334,26 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
           const SizedBox(height: 8),
           _buildCreationOption(
             context,
-            icon: Icons.photo_camera_outlined,
-            title: 'Desde foto o PDF',
-            subtitle: 'Importa una rutina existente',
-            available: false,
-            onTap: () => _showComingSoon(context),
+            icon: Icons.text_snippet_outlined,
+            title: 'Desde texto',
+            subtitle: 'Pega el texto de tu rutina',
+            available: true,
+            onTap: () async {
+              await context.push(RouteNames.importRoutineText);
+              if (mounted) setState(() {});
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildCreationOption(
+            context,
+            icon: Icons.picture_as_pdf_outlined,
+            title: 'Desde PDF',
+            subtitle: 'Extrae ejercicios de un PDF',
+            available: true,
+            onTap: () async {
+              await context.push(RouteNames.importRoutinePdf);
+              if (mounted) setState(() {});
+            },
           ),
           const SizedBox(height: 8),
           _buildCreationOption(

@@ -6,6 +6,9 @@ import '../../features/progress/screens/progress_screen.dart';
 import '../../features/routines/screens/routines_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/routines/screens/create_routine_screen.dart';
+import '../../features/routines/screens/import_routine_text_screen.dart';
+import '../../features/routines/screens/import_routine_pdf_screen.dart';
+import '../../features/routines/screens/import_routine_image_screen.dart';
 import '../../shared/widgets/atlas_bottom_nav.dart';
 import 'route_names.dart';
 
@@ -44,6 +47,18 @@ final appRouter = GoRouter(
     GoRoute(
       path: RouteNames.createRoutine,
       builder: (context, state) => const CreateRoutineScreen(),
+    ),
+    GoRoute(
+      path: RouteNames.importRoutineText,
+      builder: (context, state) => const ImportRoutineTextScreen(),
+    ),
+    GoRoute(
+      path: RouteNames.importRoutinePdf,
+      builder: (context, state) => const ImportRoutinePdfScreen(),
+    ),
+    GoRoute(
+      path: RouteNames.importRoutineImage,
+      builder: (context, state) => const ImportRoutineImageScreen(),
     ),
   ],
 );

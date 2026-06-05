@@ -493,14 +493,16 @@ Completado:
 * catálogo de ejercicios
 * historial real
 * persistencia local (Hive)
-
-Pendiente:
-
 * dashboard con datos reales
 * progress con datos reales
 * récords históricos por ejercicio
+* Atlas Coach Lite (insights automáticos sin IA)
+
+Pendiente:
+
+* TAREA-013 importación de rutinas externas (texto → rutina, luego OCR)
 * editor de rutinas existentes
-* generación IA
+* Firebase / autenticación
 
 ---
 
@@ -687,20 +689,25 @@ Estado: Resuelto (TAREA-007).
 
 Dashboard y ProgressScreen usan datos mock.
 
+Estado: Resuelto (TAREA-014, TAREA-015, TAREA-016, TAREA-017).
+
+---
+
+## DT-005
+
+No existe flujo de importación de rutinas externas.
+
 Prioridad: Alta.
 
-Relacionada con: TAREA-014, TAREA-015, TAREA-016.
+Relacionada con: TAREA-013.
 
 ---
 
 # Decisiones futuras
 
-Antes de implementar Firebase o IA real deben completarse:
+Antes de implementar Firebase o IA real debe completarse:
 
-* TAREA-014 Dashboard real
-* TAREA-015 Progress real
-* TAREA-016 Récords históricos
+* TAREA-013 Importación de rutinas externas (Fase 1 → texto, Fase 2 → OCR)
 
-Primero validar producto con datos reales.
-
-Luego escalar infraestructura.
+El producto ya tiene datos reales en todas las pantallas.
+El siguiente paso de valor es permitir al usuario traer sus rutinas desde afuera.

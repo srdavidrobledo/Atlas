@@ -217,7 +217,7 @@ Logros:
 
 ---
 
-# v1.4 (Actual)
+# v1.4
 
 Estado:
 
@@ -233,9 +233,39 @@ Logros:
 * Writes correctamente awaited (Future<void>)
 * Validado en Chrome con --web-port=8080
 
+---
+
+# v1.5
+
+Estado:
+
+Dashboard y Progress con datos reales.
+
+Logros:
+
+* Dashboard reemplaza MockStats con _DashboardStats calculado desde WorkoutSessionStore.sessions
+* Métricas reales: sesiones esta semana, horas este mes, total entrenamientos, último entreno
+* ProgressScreen añade sección de 4 métricas resumen: sesiones, peso máx., duración media, tiempo total
+* Progresión de fuerza con selector dinámico de ejercicios reales y % cambio entre sesiones
+* Récords personales calculados desde ExerciseStat.maxKg (con fallback demo)
+
+---
+
+# v1.6
+
+Estado:
+
+Récords históricos y Atlas Coach Lite.
+
+Logros:
+
+* Detección de PR por sesión comparando cronológicamente contra máximos previos
+* Badge 🏆 PR en tarjetas del historial cuando la sesión contiene un nuevo récord
+* Sección "Mayor progreso histórico": ranking top-5 con barra visual y % de mejora
+* AtlasCoach en lib/shared/atlas_coach.dart — motor de insights sin IA externa
+* Sección "Atlas Coach" en Dashboard reemplaza Insights fijos
+* 6 tipos de insight: días desde último entreno, frecuencia semanal, duración promedio, progreso reciente, mejor evolución histórica, motivacional por racha
+
 Pendiente:
 
-* TAREA-014 Dashboard con datos reales
-* TAREA-015 ProgressScreen con datos reales
-* TAREA-016 Récords históricos por ejercicio
-* TAREA-013 Importación de rutinas externas (épica futura)
+* TAREA-013 Importación de rutinas externas (activa)

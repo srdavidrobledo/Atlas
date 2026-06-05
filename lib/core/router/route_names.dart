@@ -5,5 +5,8 @@ class RouteNames {
   static const String workoutSummary = '/workout/summary';
   static const String routines = '/routines';
   static const String createRoutine = '/routines/create';
+  static const String importRoutineText = '/routines/import-text';
+  static const String importRoutinePdf   = '/routines/import-pdf';
+  static const String importRoutineImage = '/routines/import-image';
   static const String profile = '/profile';
 }

@@ -45,9 +45,8 @@ Notas: WorkoutSessionStore.sessions alimenta la pantalla de historial.
 
 ## TAREA-013
 Importación de rutinas externas
-Estado: Pendiente
+Estado: Activa — siguiente tarea
 Prioridad: Alta
-Épica — no implementar hasta completar Dashboard y Progress reales.
 
 Fases:
 - Fase 1: Motor texto libre → MockRoutine (detectar días, ejercicios, sets/reps; mapear contra ExerciseCatalog; crear ejercicios nuevos si no existen en catálogo)
@@ -56,18 +55,20 @@ Fases:
 
 ## TAREA-014
 Dashboard con datos reales
-Estado: Pendiente
-Prioridad: Alta
-Notas: Reemplazar MockStats con WorkoutSessionStore.sessions.
+Estado: Completado
+Notas: _DashboardStats reemplaza MockStats. Métricas: sesiones esta semana, horas este mes, logros, último entreno.
 
 ## TAREA-015
 ProgressScreen con datos reales
-Estado: Pendiente
-Prioridad: Alta
-Notas: Gráficos fl_chart de volumen y peso por sesión.
+Estado: Completado
+Notas: _ProgressStats cubre 4 métricas resumen, progresión de fuerza real por ejercicio, récords desde ExerciseStat.
 
 ## TAREA-016
 Récords históricos por ejercicio
-Estado: Pendiente
-Prioridad: Alta
-Notas: Máximo kg por ejercicio calculado a partir de ExerciseStat en sesiones guardadas.
+Estado: Completado
+Notas: PR detection cronológica, badge 🏆 en historial, ranking "Mayor progreso histórico" con barra visual y % de mejora.
+
+## TAREA-017
+Atlas Coach Lite
+Estado: Completado
+Notas: AtlasCoach en lib/shared/ genera hasta 6 insights dinámicos: días desde último entreno, frecuencia semanal, duración promedio, progreso reciente (highlight), mejor evolución histórica, motivacional por racha. Sin IA externa.
