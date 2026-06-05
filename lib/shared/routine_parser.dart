@@ -142,7 +142,7 @@ class RoutineParser {
   static final _dayKeywords = RegExp(
     r'^(día|dia|day|lunes|martes|mi[eé]rcoles|miercoles|jueves|viernes|'
     r's[aá]bado|sabado|domingo|push|pull|piernas|legs|upper|lower|'
-    r'full\s*body|torso|empuje|tirón|tiron|fuerza|volumen)',
+    r'full\s*body|torso|empuje|tirón|tiron|fuerza|volumen)(\s|$)',
     caseSensitive: false,
   );
 

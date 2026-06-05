@@ -92,4 +92,99 @@ class RoutineStore {
     MockData.routines.removeWhere((r) => r.id == id);
     await persistRoutines();
   }
+
+  static Future<void> renameRoutine(String id, String newName) async {
+    final idx = MockData.routines.indexWhere((r) => r.id == id);
+    if (idx == -1) return;
+    final r = MockData.routines[idx];
+    MockData.routines[idx] = MockRoutine(
+      id: r.id, name: newName, isActive: r.isActive,
+      days: r.days, totalSessions: r.totalSessions, lastUsed: r.lastUsed,
+    );
+    if (id == _activeRoutineId) WorkoutSessionStore.activeRoutine = MockData.routines[idx];
+    await persistRoutines();
+  }
+
+  static Future<void> duplicateRoutine(String id) async {
+    final src = MockData.routines.firstWhere((r) => r.id == id);
+    final newId = 'r_${DateTime.now().millisecondsSinceEpoch}';
+    final copy = MockRoutine(
+      id: newId,
+      name: '${src.name} (copia)',
+      isActive: false,
+      days: src.days.map((d) => MockRoutineDay(
+        id: 'day_${newId}_${d.id}',
+        name: d.name,
+        exercises: List.from(d.exercises),
+      )).toList(),
+      totalSessions: 0,
+      lastUsed: 'Nunca',
+    );
+    MockData.routines.add(copy);
+    await persistRoutines();
+  }
+
+  // ── Días ─────────────────────────────────────────────────────────────
+
+  static Future<void> addDay(String routineId, String dayName) async {
+    final r = MockData.routines.firstWhere((r) => r.id == routineId);
+    final dayId = 'day_${routineId}_${DateTime.now().millisecondsSinceEpoch}';
+    r.days.add(MockRoutineDay(id: dayId, name: dayName, exercises: []));
+    await persistRoutines();
+  }
+
+  static Future<void> removeDay(String routineId, String dayId) async {
+    final r = MockData.routines.firstWhere((r) => r.id == routineId);
+    r.days.removeWhere((d) => d.id == dayId);
+    await persistRoutines();
+  }
+
+  static Future<void> renameDay(String routineId, String dayId, String newName) async {
+    final r = MockData.routines.firstWhere((r) => r.id == routineId);
+    final idx = r.days.indexWhere((d) => d.id == dayId);
+    if (idx == -1) return;
+    final d = r.days[idx];
+    r.days[idx] = MockRoutineDay(id: d.id, name: newName, exercises: d.exercises);
+    await persistRoutines();
+  }
+
+  static Future<void> reorderDay(String routineId, int oldIndex, int newIndex) async {
+    final r = MockData.routines.firstWhere((r) => r.id == routineId);
+    final day = r.days.removeAt(oldIndex);
+    r.days.insert(newIndex, day);
+    await persistRoutines();
+  }
+
+  // ── Ejercicios ────────────────────────────────────────────────────────
+
+  static Future<void> addExercise(String routineId, String dayId, MockExercise exercise) async {
+    final r = MockData.routines.firstWhere((r) => r.id == routineId);
+    final d = r.days.firstWhere((d) => d.id == dayId);
+    d.exercises.add(exercise);
+    await persistRoutines();
+  }
+
+  static Future<void> removeExercise(String routineId, String dayId, int exerciseIndex) async {
+    final r = MockData.routines.firstWhere((r) => r.id == routineId);
+    final d = r.days.firstWhere((d) => d.id == dayId);
+    d.exercises.removeAt(exerciseIndex);
+    await persistRoutines();
+  }
+
+  static Future<void> reorderExercise(String routineId, String dayId, int oldIndex, int newIndex) async {
+    final r = MockData.routines.firstWhere((r) => r.id == routineId);
+    final d = r.days.firstWhere((d) => d.id == dayId);
+    final ex = d.exercises.removeAt(oldIndex);
+    d.exercises.insert(newIndex, ex);
+    await persistRoutines();
+  }
+
+  static Future<void> updateExercise(
+    String routineId, String dayId, int exerciseIndex, MockExercise updated,
+  ) async {
+    final r = MockData.routines.firstWhere((r) => r.id == routineId);
+    final d = r.days.firstWhere((d) => d.id == dayId);
+    d.exercises[exerciseIndex] = updated;
+    await persistRoutines();
+  }
 }

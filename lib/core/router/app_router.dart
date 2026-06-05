@@ -9,6 +9,7 @@ import '../../features/routines/screens/create_routine_screen.dart';
 import '../../features/routines/screens/import_routine_text_screen.dart';
 import '../../features/routines/screens/import_routine_pdf_screen.dart';
 import '../../features/routines/screens/import_routine_image_screen.dart';
+import '../../features/routines/screens/edit_routine_screen.dart';
 import '../../shared/widgets/atlas_bottom_nav.dart';
 import 'route_names.dart';
 
@@ -59,6 +60,12 @@ final appRouter = GoRouter(
     GoRoute(
       path: RouteNames.importRoutineImage,
       builder: (context, state) => const ImportRoutineImageScreen(),
+    ),
+    GoRoute(
+      path: RouteNames.editRoutine,
+      builder: (context, state) => EditRoutineScreen(
+        routineId: state.extra as String,
+      ),
     ),
   ],
 );

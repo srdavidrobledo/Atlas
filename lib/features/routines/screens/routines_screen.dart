@@ -213,7 +213,10 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => _showComingSoon(context),
+                        onPressed: () async {
+                          await context.push(RouteNames.editRoutine, extra: routine.id);
+                          if (mounted) setState(() {});
+                        },
                         icon: const Icon(Icons.edit_outlined, size: 16),
                         label: const Text('Editar'),
                         style: OutlinedButton.styleFrom(
@@ -276,7 +279,10 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => _showComingSoon(context),
+                          onPressed: () async {
+                            await context.push(RouteNames.editRoutine, extra: r.id);
+                            if (mounted) setState(() {});
+                          },
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(0, 36),
                             padding: EdgeInsets.zero,
