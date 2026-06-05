@@ -156,7 +156,7 @@ Logros:
 
 ---
 
-# v1.0 (Actual)
+# v1.0
 
 Estado:
 
@@ -165,21 +165,77 @@ MVP funcional.
 Completado:
 
 * Infraestructura
-* Git
-* GitHub
-* Flutter
-* Dashboard
-* Workout
-* Progress
-* Profile
-* Rutinas básicas
+* Git / GitHub / Flutter
+* Dashboard, Workout, Progress, Profile, Rutinas básicas
+
+---
+
+# v1.1
+
+Estado:
+
+Workout día completo + selector de día.
+
+Logros:
+
+* WorkoutScreen con todos los ejercicios del día activo
+* Selector visual de día (tabs en WorkoutScreen)
+* Sincronización día activo ↔ WorkoutSessionStore
+* Cronómetro, RIR, peso y reps editables por set
+
+---
+
+# v1.2
+
+Estado:
+
+Creación manual de rutinas + catálogo de ejercicios.
+
+Logros:
+
+* CreateRoutineScreen: nombre, días, ejercicios por día
+* ExerciseCatalog: búsqueda por grupo muscular
+* Selección múltiple y "seleccionar todos"
+* RoutineStore: gestión de rutinas en memoria
+* Activar / eliminar rutinas desde RoutinesScreen
+
+---
+
+# v1.3
+
+Estado:
+
+Historial real + Workout Summary con datos reales.
+
+Logros:
+
+* WorkoutSummaryScreen con datos reales de sesión
+* Peso máximo levantado reemplaza volumen en resumen
+* Mayor progreso calculado comparando contra historial
+* Historial de sesiones alimentado por WorkoutSessionStore.sessions
+* Feeling y notas guardados por sesión
+
+---
+
+# v1.4 (Actual)
+
+Estado:
+
+Persistencia local validada.
+
+Logros:
+
+* Persistencia con Hive (hive_flutter)
+* Serialización JSON string (evita problemas de tipo anidado en web)
+* Rutinas del usuario con días y ejercicios persisten entre sesiones
+* Rutina activa y día activo persisten entre sesiones
+* Historial de sesiones persiste entre sesiones
+* Writes correctamente awaited (Future<void>)
+* Validado en Chrome con --web-port=8080
 
 Pendiente:
 
-* TAREA-006 Workout = día completo
-* TAREA-007 Selector visual de día
-* TAREA-008 Creación manual de rutinas
-* TAREA-009 Editor de rutinas
-* TAREA-010 Rutinas IA
-* TAREA-011 Persistencia local
-* TAREA-012 Historial real
+* TAREA-014 Dashboard con datos reales
+* TAREA-015 ProgressScreen con datos reales
+* TAREA-016 Récords históricos por ejercicio
+* TAREA-013 Importación de rutinas externas (épica futura)

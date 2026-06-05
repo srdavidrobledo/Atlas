@@ -74,7 +74,6 @@ No implementar sin aprobación explícita:
 * Notificaciones
 * Tabata
 * Reportes avanzados
-* Persistencia permanente
 
 ---
 
@@ -167,19 +166,14 @@ Opciones:
 
 ## Decisión 003
 
-WorkoutSessionStore se mantiene como núcleo temporal del sistema.
+WorkoutSessionStore se mantiene como núcleo del sistema.
 
 Motivo:
 
 Evitar complejidad prematura.
 
-No reemplazar por:
-
-* Firebase
-* Hive
-* Storage
-
-hasta validar funcionalidad.
+Persistencia implementada con Hive (hive_flutter).
+Firebase no reemplaza Hive hasta validar producto completo.
 
 ---
 
@@ -341,29 +335,27 @@ Actualmente utiliza datos mock.
 
 Estado:
 
-Parcialmente funcional
+Funcional
 
 ## Implementado
 
 * Lista de rutinas
 * Visualización de días
-* Selección básica de día
+* Selector de día sincronizado con WorkoutSessionStore
+* Creación manual de rutinas (nombre, días, ejercicios)
+* Catálogo de ejercicios con búsqueda por grupo muscular
+* Selección múltiple y "seleccionar todos" en catálogo
+* Activar rutina activa
+* Eliminar rutinas (excepto la activa)
+* Persistencia completa en Hive
 
 ## Probado
 
-Parcialmente
-
-## Observaciones
-
-Existe incertidumbre sobre el comportamiento real de selección de día.
-
-Debe ser auditado nuevamente.
+Sí
 
 ## Pendiente
 
-* Creación manual de rutinas
-* Editor de rutinas
-* Validación completa del selector de día
+* Editar rutinas existentes
 
 ---
 
@@ -425,11 +417,12 @@ Funcional
 
 ## Implementado
 
-* Duración
-* Series
-* Volumen
+* Duración real de sesión
+* Series completadas
+* Peso máximo levantado
+* Mayor progreso vs historial previo
 * Notas
-* Estado emocional
+* Estado emocional (feeling)
 
 ## Probado
 
@@ -437,7 +430,7 @@ Sí
 
 ## Observaciones
 
-Todavía utiliza parte de información mock.
+Datos 100% reales desde WorkoutSessionStore. Sin mock.
 
 ---
 
@@ -494,17 +487,20 @@ Completado:
 
 * infraestructura
 * navegación
-* entrenamiento básico
+* entrenamiento día completo
 * objetivos
-* progreso
+* creación manual de rutinas
+* catálogo de ejercicios
+* historial real
+* persistencia local (Hive)
 
 Pendiente:
 
-* día completo de entrenamiento
-* editor de rutinas
+* dashboard con datos reales
+* progress con datos reales
+* récords históricos por ejercicio
+* editor de rutinas existentes
 * generación IA
-* persistencia real
-* historial real
 
 ---
 
@@ -667,13 +663,7 @@ WorkoutScreen todavía representa un ejercicio activo en lugar de representar un
 
 WorkoutScreen no representa todavía un día completo.
 
-Prioridad:
-
-Alta.
-
-Relacionada con:
-
-TAREA-006
+Estado: Resuelto (TAREA-006).
 
 ---
 
@@ -681,13 +671,7 @@ TAREA-006
 
 Nueva rutina no fue auditada completamente.
 
-Prioridad:
-
-Alta.
-
-Relacionada con:
-
-TAREA-008
+Estado: Resuelto (TAREA-008 + TAREA-009).
 
 ---
 
@@ -695,31 +679,28 @@ TAREA-008
 
 Selector de día necesita validación funcional completa.
 
-Prioridad:
+Estado: Resuelto (TAREA-007).
 
-Media.
+---
 
-Relacionada con:
+## DT-004
 
-TAREA-007
+Dashboard y ProgressScreen usan datos mock.
+
+Prioridad: Alta.
+
+Relacionada con: TAREA-014, TAREA-015, TAREA-016.
 
 ---
 
 # Decisiones futuras
 
-Antes de implementar:
+Antes de implementar Firebase o IA real deben completarse:
 
-* Firebase
-* IA real
-* Persistencia permanente
+* TAREA-014 Dashboard real
+* TAREA-015 Progress real
+* TAREA-016 Récords históricos
 
-deben completarse:
-
-TAREA-006
-TAREA-007
-TAREA-008
-TAREA-009
-
-Primero validar producto.
+Primero validar producto con datos reales.
 
 Luego escalar infraestructura.

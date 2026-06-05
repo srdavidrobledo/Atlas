@@ -33,15 +33,15 @@ Leer en este orden:
 
 # Estado actual
 
-Atlas se encuentra en fase MVP.
+Atlas se encuentra en v1.4.
 
-La funcionalidad principal ya existe.
+MVP funcional con persistencia validada.
 
 Actualmente el foco está en:
 
-TAREA-006
-
-Workout = día completo de entrenamiento
+TAREA-014 — Dashboard con datos reales
+TAREA-015 — ProgressScreen con datos reales
+TAREA-016 — Récords históricos por ejercicio
 
 ---
 
@@ -86,7 +86,10 @@ flutter pub get
 
 # Ejecutar Atlas
 
-flutter run -d chrome
+flutter run -d chrome --web-port=8080
+
+Importante: usar siempre --web-port=8080 en Chrome.
+IndexedDB (Hive web) es por origen. Sin puerto fijo, los datos no persisten entre reinicios.
 
 ---
 
@@ -135,7 +138,6 @@ No implementar todavía:
 
 * Firebase
 * IA real
-* Persistencia permanente
 * Nutrición
 * Notificaciones
 * Tabata
@@ -145,17 +147,17 @@ No implementar todavía:
 
 # Próximo objetivo del proyecto
 
-Completar:
+Completar en orden:
 
-TAREA-006
-
-Workout = día completo de entrenamiento
+1. TAREA-014 — Dashboard con datos reales (WorkoutSessionStore.sessions)
+2. TAREA-015 — ProgressScreen con datos reales (gráficos fl_chart)
+3. TAREA-016 — Récords históricos por ejercicio
 
 Antes de avanzar hacia:
 
-* editor de rutinas
-* IA
-* persistencia
+* TAREA-013 importación de rutinas externas
+* editor de rutinas existentes
+* Firebase / IA
 
 ---
 
