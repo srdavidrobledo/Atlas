@@ -1,5 +1,5 @@
 import 'exercise_catalog.dart';
-import 'mock_data.dart';
+import '../../../shared/mock_data.dart';
 
 // ─── Modelos de salida ────────────────────────────────────────────────────
 
@@ -158,7 +158,6 @@ class RoutineParser {
   }
 
   static String _cleanDayName(String line) {
-    // Normaliza capitalización básica
     return line.trim().isEmpty ? 'Día' : _capitalizeFirst(line.trim());
   }
 
@@ -176,7 +175,6 @@ class RoutineParser {
     // Nombre: lo que esté antes o después del patrón NxM
     final before = line.substring(0, match.start).trim();
     final after = line.substring(match.end).trim();
-    // Limpiar separadores comunes al inicio/fin
     final rawName = _cleanExerciseName(before.isNotEmpty ? before : after);
 
     if (rawName.isEmpty) return null;

@@ -1,15 +1,18 @@
-import 'dart:typed_data';
+﻿import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
-import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
+import 'package:syncfusion_flutter_pdf/pdf.dart' as sfpdf;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/mock_data.dart';
-import '../../../shared/routine_parser.dart';
+import '../data/routine_parser.dart';
 import '../data/routine_store.dart';
 
-enum _Phase { idle, extracting, scanned, preview, saving }
+enum _Phase { idle, extracting, ocrProcessing, editing, preview, saving }
 
 class ImportRoutinePdfScreen extends StatefulWidget {
   const ImportRoutinePdfScreen({super.key});
@@ -23,15 +26,18 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
   ParsedRoutine? _parsed;
   String? _fileName;
   String? _extractedText;
+  bool _isOcrSource = false;
   final _nameController = TextEditingController(text: 'Rutina importada');
+  final _textController = TextEditingController();
 
   @override
   void dispose() {
     _nameController.dispose();
+    _textController.dispose();
     super.dispose();
   }
 
-  // ── Selección y extracción ────────────────────────────────────────────────
+  // ── Selección y extracción ─────────────────────────────────────────────────
 
   Future<void> _pickAndExtract() async {
     final result = await FilePicker.platform.pickFiles(
@@ -47,22 +53,166 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
     setState(() {
       _phase = _Phase.extracting;
       _fileName = name;
+      _isOcrSource = false;
     });
 
-    // Pequeño delay para que el spinner sea visible
     await Future.delayed(const Duration(milliseconds: 300));
 
     final text = await _extractText(bytes);
     final meaningful = text.replaceAll(RegExp(r'\s+'), '').length;
 
     if (meaningful < 40) {
-      setState(() => _phase = _Phase.scanned);
+      // PDF escaneado — intentar OCR
+      if (kIsWeb) {
+        // ML Kit no disponible en web
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'PDF escaneado detectado. El OCR solo está disponible en la app móvil.'),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 4),
+          ));
+        }
+        setState(() => _phase = _Phase.idle);
+        return;
+      }
+
+      setState(() => _phase = _Phase.ocrProcessing);
+      await _runPdfOcr(bytes, name);
       return;
     }
 
     _extractedText = text;
+    _goToPreview(text, name);
+  }
+
+  // ── Extracción de texto digital ────────────────────────────────────────────
+
+  Future<String> _extractText(Uint8List bytes) async {
+    try {
+      final document = sfpdf.PdfDocument(inputBytes: bytes);
+      final extractor = sfpdf.PdfTextExtractor(document);
+      final text = extractor.extractText();
+      document.dispose();
+      return text;
+    } catch (_) {
+      return '';
+    }
+  }
+
+  // ── OCR para PDFs escaneados ───────────────────────────────────────────────
+
+  Future<void> _runPdfOcr(Uint8List bytes, String fileName) async {
+    final tempDir = Directory.systemTemp;
+    final tempFiles = <File>[];
+    final pageTexts = <String>[];
+
+    try {
+      final document = await pdfx.PdfDocument.openData(bytes);
+      final pageCount = document.pagesCount;
+
+      for (int pageIndex = 1; pageIndex <= pageCount; pageIndex++) {
+        final page = await document.getPage(pageIndex);
+        final pageImage = await page.render(
+          width: page.width * 2,
+          height: page.height * 2,
+          format: pdfx.PdfPageImageFormat.jpeg,
+          backgroundColor: '#ffffff',
+        );
+        await page.close();
+
+        if (pageImage?.bytes == null) continue;
+
+        final tempFile = File(
+          '${tempDir.path}/atlas_ocr_p$pageIndex.jpg',
+        );
+        await tempFile.writeAsBytes(pageImage!.bytes);
+        tempFiles.add(tempFile);
+
+        final pageText = await _ocrFile(tempFile.path);
+        if (pageText.trim().isNotEmpty) {
+          pageTexts.add(pageText.trim());
+        }
+      }
+
+      await document.close();
+    } catch (e) {
+      // Si pdfx no puede renderizar, no podemos continuar
+    } finally {
+      for (final f in tempFiles) {
+        try { f.deleteSync(); } catch (_) {}
+      }
+    }
+
+    if (!mounted) return;
+
+    if (pageTexts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            'No se pudo extraer texto del PDF escaneado. Prueba con la importación por foto.'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 4),
+      ));
+      setState(() => _phase = _Phase.idle);
+      return;
+    }
+
+    final combined = pageTexts.join('\n');
+    _isOcrSource = true;
+    _textController.text = combined;
+
     final routineName = _nameController.text.trim().isEmpty
-        ? name.replaceAll('.pdf', '')
+        ? fileName.replaceAll('.pdf', '')
+        : _nameController.text.trim();
+    _nameController.text = routineName;
+
+    setState(() => _phase = _Phase.editing);
+  }
+
+  Future<String> _ocrFile(String path) async {
+    final inputImage = InputImage.fromFilePath(path);
+    final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    try {
+      final result = await recognizer.processImage(inputImage);
+      return result.text;
+    } catch (_) {
+      return '';
+    } finally {
+      recognizer.close();
+    }
+  }
+
+  // ── Parseo desde editor de texto ───────────────────────────────────────────
+
+  void _parseText() {
+    final text = _textController.text.trim();
+    if (text.isEmpty) return;
+
+    final routineName = _nameController.text.trim().isEmpty
+        ? 'Rutina importada'
+        : _nameController.text.trim();
+
+    final parsed = RoutineParser.parse(text, routineName: routineName);
+
+    if (parsed.days.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('No se detectaron ejercicios. Revisa el texto y el formato.'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+
+    setState(() {
+      _parsed = parsed;
+      _phase = _Phase.preview;
+    });
+  }
+
+  // ── Flujo texto digital → preview directo ─────────────────────────────────
+
+  void _goToPreview(String text, String fileName) {
+    final routineName = _nameController.text.trim().isEmpty
+        ? fileName.replaceAll('.pdf', '')
         : _nameController.text.trim();
     _nameController.text = routineName;
 
@@ -83,18 +233,6 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
       _parsed = parsed;
       _phase = _Phase.preview;
     });
-  }
-
-  Future<String> _extractText(Uint8List bytes) async {
-    try {
-      final document = PdfDocument(inputBytes: bytes);
-      final extractor = PdfTextExtractor(document);
-      final text = extractor.extractText();
-      document.dispose();
-      return text;
-    } catch (_) {
-      return '';
-    }
   }
 
   // ── Guardar ───────────────────────────────────────────────────────────────
@@ -146,8 +284,17 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
           if (_phase == _Phase.preview)
             TextButton(
               onPressed: () => setState(() {
-                _phase = _Phase.idle;
+                _phase = _isOcrSource ? _Phase.editing : _Phase.idle;
                 _parsed = null;
+              }),
+              child: Text(_isOcrSource ? 'Editar' : 'Reintentar'),
+            ),
+          if (_phase == _Phase.editing)
+            TextButton(
+              onPressed: () => setState(() {
+                _phase = _Phase.idle;
+                _isOcrSource = false;
+                _textController.clear();
               }),
               child: const Text('Reintentar'),
             ),
@@ -161,19 +308,30 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
   }
 
   String get _appBarTitle => switch (_phase) {
-        _Phase.preview => 'Vista previa',
-        _Phase.extracting => 'Analizando PDF…',
-        _Phase.scanned => 'PDF escaneado',
-        _ => 'Importar PDF',
+        _Phase.preview      => 'Vista previa',
+        _Phase.extracting   => 'Analizando PDF…',
+        _Phase.ocrProcessing => 'Aplicando OCR…',
+        _Phase.editing      => 'Revisar texto OCR',
+        _Phase.saving       => 'Vista previa',
+        _Phase.idle         => 'Importar PDF',
       };
 
   Widget _buildBody() {
     return switch (_phase) {
-      _Phase.idle    => _buildIdle(),
-      _Phase.extracting => _buildExtracting(),
-      _Phase.scanned => _buildScanned(),
-      _Phase.preview => _buildPreview(),
-      _Phase.saving  => _buildPreview(),
+      _Phase.idle          => _buildIdle(),
+      _Phase.extracting    => _buildProcessing(
+          key: 'extracting',
+          message: 'Extrayendo texto del PDF…',
+        ),
+      _Phase.ocrProcessing => _buildProcessing(
+          key: 'ocr',
+          message: 'PDF escaneado detectado, aplicando OCR…',
+          subtitle: 'Esto puede tardar unos segundos',
+          isOcr: true,
+        ),
+      _Phase.editing       => _buildEditing(),
+      _Phase.preview       => _buildPreview(),
+      _Phase.saving        => _buildPreview(),
     };
   }
 
@@ -235,7 +393,7 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Solo archivos .pdf con texto seleccionable',
+                    'Texto seleccionable o PDF escaneado',
                     style: AppTextStyles.bodySmall,
                   ),
                 ],
@@ -266,7 +424,8 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
           const SizedBox(height: 6),
           Text(
             '✅  PDFs con texto seleccionable (creados digitalmente)\n'
-            '❌  PDFs escaneados / imágenes → OCR próximamente\n\n'
+            '✅  PDFs escaneados — OCR automático (móvil)\n'
+            '✏️  Puedes editar el texto OCR antes de parsear\n\n'
             'Formato recomendado:\n'
             'Día A\nPress banca 4x8\nPress inclinado 3x10',
             style: AppTextStyles.bodySmall.copyWith(
@@ -280,54 +439,128 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
     );
   }
 
-  Widget _buildExtracting() {
+  Widget _buildProcessing({
+    required String key,
+    required String message,
+    String? subtitle,
+    bool isOcr = false,
+  }) {
     return Center(
-      key: const ValueKey('extracting'),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 24),
-          Text('Extrayendo texto del PDF…', style: AppTextStyles.titleMedium),
-          if (_fileName != null) ...[
-            const SizedBox(height: 8),
-            Text(_fileName!, style: AppTextStyles.bodySmall),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScanned() {
-    return Center(
-      key: const ValueKey('scanned'),
+      key: ValueKey(key),
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('🔍', style: TextStyle(fontSize: 56)),
-            const SizedBox(height: 20),
+            if (isOcr) ...[
+              const Text('🔍', style: TextStyle(fontSize: 48)),
+              const SizedBox(height: 20),
+            ] else
+              const CircularProgressIndicator(),
+            if (!isOcr) const SizedBox(height: 24)
+            else const SizedBox(height: 16),
             Text(
-              'PDF escaneado detectado',
-              style: AppTextStyles.titleLarge,
+              message,
+              style: AppTextStyles.titleMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Este PDF parece ser una imagen escaneada.\nOCR llegará en una próxima versión.',
-              style: AppTextStyles.bodySmall.copyWith(height: 1.6),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            OutlinedButton.icon(
-              onPressed: () => setState(() => _phase = _Phase.idle),
-              icon: const Icon(Icons.arrow_back_rounded),
-              label: const Text('Volver'),
-            ),
+            if (_fileName != null) ...[
+              const SizedBox(height: 8),
+              Text(_fileName!, style: AppTextStyles.bodySmall),
+            ],
+            if (subtitle != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                subtitle,
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            if (isOcr) ...[
+              const SizedBox(height: 24),
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildEditing() {
+    return Column(
+      key: const ValueKey('editing'),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Row(
+            children: [
+              Text(
+                'Texto detectado — edita si es necesario',
+                style: AppTextStyles.labelSmall,
+              ),
+              const Spacer(),
+              Text(
+                '${_textController.text.split('\n').length} líneas',
+                style: AppTextStyles.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF3F3F46), width: 0.5),
+              ),
+              child: TextField(
+                controller: _textController,
+                maxLines: null,
+                expands: true,
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontFamily: 'monospace',
+                  fontSize: 13,
+                  height: 1.6,
+                ),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.all(14),
+                  border: InputBorder.none,
+                  hintText:
+                      'Día A\nPress banca 4x8\nPress inclinado 3x10\n...',
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed:
+                  _textController.text.trim().isEmpty ? null : _parseText,
+              icon: const Icon(Icons.auto_awesome_rounded),
+              label: const Text('PARSEAR RUTINA'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                textStyle: AppTextStyles.labelLarge,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -344,13 +577,12 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Resumen
+                if (_isOcrSource)
+                  _buildOcrBadge(),
                 _buildSummaryRow(parsed, unmatched),
                 const SizedBox(height: 16),
-                // Texto detectado (colapsable)
                 if (_extractedText != null) _buildTextDebug(),
                 const SizedBox(height: 8),
-                // Días
                 ...parsed.days.map(_buildDayCard),
                 if (unmatched > 0) ...[
                   const SizedBox(height: 12),
@@ -362,6 +594,33 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
         ),
         _buildSaveButton(),
       ],
+    );
+  }
+
+  Widget _buildOcrBadge() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.document_scanner_rounded,
+                size: 16, color: AppColors.primaryLight),
+            const SizedBox(width: 8),
+            Text(
+              'Texto extraído por OCR',
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: AppColors.primaryLight, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -407,8 +666,7 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
           children: [
             Row(
               children: [
-                Text('Texto detectado',
-                    style: AppTextStyles.labelSmall),
+                Text('Texto detectado', style: AppTextStyles.labelSmall),
                 const Spacer(),
                 Icon(
                   _showRawText

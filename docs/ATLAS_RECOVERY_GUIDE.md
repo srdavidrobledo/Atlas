@@ -158,6 +158,69 @@ Luego:
 
 ---
 
+---
+
+# Android Build Compatibility
+
+## Síntoma
+
+El build de Android falla en `assembleDebug` al correr `flutter run` o `flutter build apk`.
+
+## Error típico
+
+```
+Execution failed for task ':file_picker:checkDebugAarMetadata'.
+> Dependency ':flutter_plugin_android_lifecycle' requires libraries and applications
+  that depend on it to compile against version 36 or later of the Android APIs.
+  :file_picker is currently compiled against android-34.
+```
+
+## Causa raíz
+
+Flutter 3.44.1 actualizó `flutter_plugin_android_lifecycle` a una versión que declara
+en su AAR metadata que requiere `compileSdk ≥ 36`.
+
+`file_picker 8.x` tiene `compileSdk 34` hardcodeado en su `build.gradle` propio,
+lo que viola esa restricción en tiempo de build.
+
+## Solución aplicada
+
+En `android/build.gradle.kts` se agregó un override de `compileSdk = 36` para
+todos los subproyectos de tipo `LibraryExtension` (plugins Flutter) mediante
+`afterEvaluate`, dentro del bloque `subprojects{}` y antes de `evaluationDependsOn(":app")`.
+
+```kotlin
+subprojects {
+    afterEvaluate {
+        extensions.findByType<com.android.build.gradle.LibraryExtension>()
+            ?.compileSdk = 36
+    }
+    project.evaluationDependsOn(":app")
+}
+```
+
+Esto fuerza que todos los plugins (incluido `file_picker`) compilen con SDK 36
+sin necesidad de modificar su código fuente.
+
+## Advertencia para futuras actualizaciones
+
+Si se actualiza `file_picker` a una versión que ya usa `flutter.compileSdkVersion`
+(dinámico, como hace `file_picker 11.x`), hay que tener cuidado:
+
+* `file_picker 11.x` tiene una API breaking: `FilePicker.platform` fue reemplazado
+  por `FilePicker.pickFiles()` (método estático directo en clase `abstract final`).
+* `file_picker 11.x` aplica Kotlin Gradle Plugin (KGP) directamente, lo que puede
+  causar conflictos de compilación Kotlin→Java con Flutter 3.44.x.
+* Verificar compatibilidad antes de actualizar:
+
+```
+flutter pub deps | grep file_picker
+```
+
+Probar el build en Android antes de commitear cualquier cambio de versión.
+
+---
+
 # En caso de duda
 
 La fuente de verdad es:

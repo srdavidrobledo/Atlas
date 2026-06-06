@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/mock_data.dart';
-import '../../../shared/routine_parser.dart';
+import '../data/routine_parser.dart';
 import '../data/routine_store.dart';
 
 enum _Phase { idle, scanning, editing, preview, saving }

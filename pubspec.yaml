@@ -43,6 +43,7 @@ dependencies:
   # Importación de archivos
   file_picker: ^8.1.2
   syncfusion_flutter_pdf: ^26.2.4
+  pdfx: ^2.6.0
 
   # OCR (mobile-first: Android + iOS)
   google_mlkit_text_recognition: ^0.13.0

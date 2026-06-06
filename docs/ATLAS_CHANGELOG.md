@@ -269,3 +269,44 @@ Logros:
 Pendiente:
 
 * TAREA-013 Importación de rutinas externas (activa)
+
+---
+
+# v1.7
+
+Estado:
+
+Limpieza arquitectural — TAREA-018.
+
+Logros:
+
+* Plataformas Flutter regeneradas: android/, ios/, web/
+* test/widget_test.dart inicializado como placeholder
+* exercise_catalog.dart movido: shared/ → features/routines/data/
+* routine_parser.dart movido: shared/ → features/routines/data/
+* 5 imports actualizados en screens de routines
+* assets/images/ y assets/icons/ con placeholder .gitkeep
+* 0 errores en flutter analyze (203 avisos info pre-existentes)
+
+---
+
+# v1.8
+
+Estado:
+
+PDFs escaneados con OCR automático — TAREA-019.
+
+Logros:
+
+* ImportRoutinePdfScreen soporta PDFs escaneados además de PDFs con texto
+* Detección automática: si texto extraído < 40 chars → activa flujo OCR
+* pdfx ^2.6.0 agregado para renderizar páginas PDF a imagen (JPEG, x2 resolución)
+* google_mlkit_text_recognition reutilizado para OCR página a página
+* Nuevo _Phase.ocrProcessing: spinner con "PDF escaneado detectado, aplicando OCR…"
+* Nuevo _Phase.editing: texto OCR editable antes de parsear (igual que image_screen)
+* _Phase.scanned eliminado (dead end reemplazado por flujo completo)
+* Web: muestra mensaje informativo — OCR solo disponible en móvil
+* Badge "Texto extraído por OCR" visible en preview
+* Archivos temp de OCR eliminados automáticamente tras procesamiento
+* _buildInfoBox() actualizado: ✅ PDFs escaneados soportados
+* 0 errores en flutter analyze

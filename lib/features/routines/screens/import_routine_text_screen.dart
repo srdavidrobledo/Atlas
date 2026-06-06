@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/mock_data.dart';
-import '../../../shared/routine_parser.dart';
+import '../data/routine_parser.dart';
 import '../data/routine_store.dart';
 
 class ImportRoutineTextScreen extends StatefulWidget {
