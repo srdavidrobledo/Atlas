@@ -6,6 +6,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/atlas_validator.dart';
 import '../../../shared/mock_data.dart';
 import '../data/routine_parser.dart';
 import '../data/routine_store.dart';
@@ -74,6 +75,16 @@ class _ImportRoutineImageScreenState extends State<ImportRoutineImageScreen> {
   void _parseText() {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
+
+    final textType = AtlasValidator.classify(text);
+    if (textType != RoutineTextType.validRoutine) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(AtlasValidator.messageFor(textType)),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5),
+      ));
+      return;
+    }
 
     final routineName = _nameController.text.trim().isEmpty
         ? 'Rutina importada'

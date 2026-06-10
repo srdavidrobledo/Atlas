@@ -100,7 +100,7 @@ class RoutineParser {
     var currentExercises = <ParsedExercise>[];
 
     void flushDay() {
-      if (currentDayName != null) {
+      if (currentDayName != null && currentExercises.isNotEmpty) {
         days.add(ParsedDay(
           name: currentDayName,
           exercises: List.from(currentExercises),

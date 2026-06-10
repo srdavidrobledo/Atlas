@@ -8,6 +8,7 @@ import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sfpdf;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/atlas_validator.dart';
 import '../../../shared/mock_data.dart';
 import '../data/routine_parser.dart';
 import '../data/routine_store.dart';
@@ -83,6 +84,20 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
     }
 
     _extractedText = text;
+
+    final textType = AtlasValidator.classify(text);
+    if (textType != RoutineTextType.validRoutine) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AtlasValidator.messageFor(textType)),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+        ));
+      }
+      setState(() => _phase = _Phase.idle);
+      return;
+    }
+
     _goToPreview(text, name);
   }
 
@@ -187,6 +202,16 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
   void _parseText() {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
+
+    final textType = AtlasValidator.classify(text);
+    if (textType != RoutineTextType.validRoutine) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(AtlasValidator.messageFor(textType)),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5),
+      ));
+      return;
+    }
 
     final routineName = _nameController.text.trim().isEmpty
         ? 'Rutina importada'
