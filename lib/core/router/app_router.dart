@@ -10,6 +10,7 @@ import '../../features/routines/screens/import_routine_text_screen.dart';
 import '../../features/routines/screens/import_routine_pdf_screen.dart';
 import '../../features/routines/screens/import_routine_image_screen.dart';
 import '../../features/routines/screens/edit_routine_screen.dart';
+import '../../features/nutrition/screens/nutrition_screen.dart';
 import '../../shared/widgets/atlas_bottom_nav.dart';
 import 'route_names.dart';
 
@@ -34,6 +35,10 @@ final appRouter = GoRouter(
         GoRoute(
           path: RouteNames.routines,
           pageBuilder: (context, state) => const NoTransitionPage(child: RoutinesScreen()),
+        ),
+        GoRoute(
+          path: RouteNames.nutrition,
+          pageBuilder: (context, state) => const NoTransitionPage(child: NutritionScreen()),
         ),
         GoRoute(
           path: RouteNames.profile,

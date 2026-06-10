@@ -12,10 +12,11 @@ class AtlasScaffold extends StatelessWidget {
   const AtlasScaffold({super.key, required this.child});
 
   int _locationToIndex(String location) {
-    if (location.startsWith(RouteNames.progress)) return 1;
-    if (location.startsWith(RouteNames.workout)) return 2;
-    if (location.startsWith(RouteNames.routines)) return 3;
-    if (location.startsWith(RouteNames.profile)) return 4;
+    if (location.startsWith(RouteNames.progress))  return 1;
+    if (location.startsWith(RouteNames.workout))   return 2;
+    if (location.startsWith(RouteNames.routines))  return 3;
+    if (location.startsWith(RouteNames.nutrition)) return 4;
+    if (location.startsWith(RouteNames.profile))   return 5;
     return 0;
   }
 
@@ -87,16 +88,12 @@ class AtlasScaffold extends StatelessWidget {
 
   String _indexToRoute(int index) {
     switch (index) {
-      case 1:
-        return RouteNames.progress;
-      case 2:
-        return RouteNames.workout;
-      case 3:
-        return RouteNames.routines;
-      case 4:
-        return RouteNames.profile;
-      default:
-        return RouteNames.dashboard;
+      case 1: return RouteNames.progress;
+      case 2: return RouteNames.workout;
+      case 3: return RouteNames.routines;
+      case 4: return RouteNames.nutrition;
+      case 5: return RouteNames.profile;
+      default: return RouteNames.dashboard;
     }
   }
 }
@@ -120,11 +117,12 @@ class _AtlasBottomNav extends StatelessWidget {
           height: 64,
           child: Row(
             children: [
-              _NavItem(icon: Icons.home_outlined, label: 'Inicio', index: 0, current: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.show_chart_rounded, label: 'Progreso', index: 1, current: currentIndex, onTap: onTap),
+              _NavItem(icon: Icons.home_outlined,          label: 'Inicio',     index: 0, current: currentIndex, onTap: onTap),
+              _NavItem(icon: Icons.show_chart_rounded,     label: 'Progreso',   index: 1, current: currentIndex, onTap: onTap),
               _NavCenterItem(onTap: () => onTap(2)),
-              _NavItem(icon: Icons.list_alt_rounded, label: 'Rutinas', index: 3, current: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.person_outline_rounded, label: 'Perfil', index: 4, current: currentIndex, onTap: onTap),
+              _NavItem(icon: Icons.list_alt_rounded,       label: 'Rutinas',    index: 3, current: currentIndex, onTap: onTap),
+              _NavItem(icon: Icons.restaurant_menu_rounded, label: 'Nutrición', index: 4, current: currentIndex, onTap: onTap),
+              _NavItem(icon: Icons.person_outline_rounded, label: 'Perfil',     index: 5, current: currentIndex, onTap: onTap),
             ],
           ),
         ),

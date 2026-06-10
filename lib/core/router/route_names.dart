@@ -9,5 +9,6 @@ class RouteNames {
   static const String importRoutinePdf   = '/routines/import-pdf';
   static const String importRoutineImage = '/routines/import-image';
   static const String editRoutine        = '/routines/edit';
+  static const String nutrition = '/nutrition';
   static const String profile = '/profile';
 }

@@ -7,6 +7,7 @@ import '../../../shared/widgets/atlas_widgets.dart';
 import '../../../shared/mock_data.dart';
 import '../../../shared/atlas_coach.dart';
 import '../../workout/data/workout_session_store.dart';
+import '../../nutrition/data/nutrition_store.dart';
 
 class _DashboardStats {
   final List<SavedWorkoutSession> sessions;
@@ -89,6 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SliverToBoxAdapter(child: _StatsRow(stats)),
             SliverToBoxAdapter(child: _AchievementsSection(stats)),
             SliverToBoxAdapter(child: _NextWorkoutCard(context)),
+            SliverToBoxAdapter(child: _NutritionSummary()),
             SliverToBoxAdapter(child: _InsightsSection(stats)),
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
@@ -419,6 +421,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Icon(icon, size: 14, color: AppColors.textSecondary),
         const SizedBox(width: 4),
+        Text(label, style: AppTextStyles.bodySmall),
+      ],
+    );
+  }
+
+  Widget _NutritionSummary() {
+    final today = DateTime.now();
+    final calories = NutritionStore.caloriesForDay(today);
+    final protein  = NutritionStore.proteinForDay(today);
+    final meals    = NutritionStore.mealsForDay(today).length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const AtlasSectionTitle(title: 'Nutrición hoy'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: AtlasCard(
+            child: Row(
+              children: [
+                _NutriStat('🔥', '$calories', 'kcal'),
+                const SizedBox(width: 24),
+                _NutriStat('💪', '${protein.toStringAsFixed(1)}g', 'proteínas'),
+                const SizedBox(width: 24),
+                _NutriStat('🍽️', '$meals', 'comidas'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _NutriStat(String emoji, String value, String label) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 18)),
+        const SizedBox(height: 4),
+        Text(value,
+            style: AppTextStyles.numericLarge
+                .copyWith(color: AppColors.primaryLight)),
         Text(label, style: AppTextStyles.bodySmall),
       ],
     );
