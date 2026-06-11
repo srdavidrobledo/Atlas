@@ -13,6 +13,7 @@ import '../../../shared/mock_data.dart';
 import '../data/routine_parser.dart';
 import '../data/routine_store.dart';
 import '../data/table_routine_interpreter.dart';
+import '../data/ocr_grid_reconstructor.dart';
 
 enum _Phase { idle, extracting, ocrProcessing, editing, preview, saving }
 
@@ -161,7 +162,10 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
         await tempFile.writeAsBytes(pageImage!.bytes);
         tempFiles.add(tempFile);
 
-        final pageText = await _ocrFile(tempFile.path);
+        // DEC-008: reconstrucción geométrica página por página; cada página
+        // tiene su propio sistema de coordenadas, así que se procesa aislada.
+        final recognized = await _ocrFile(tempFile.path);
+        final pageText = _reconstructPage(recognized);
         if (pageText.trim().isNotEmpty) {
           pageTexts.add(pageText.trim());
         }
@@ -189,12 +193,10 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
       return;
     }
 
+    // Cada página ya viene reconstruida (grid) o normalizada (fallback).
     final combined = pageTexts.join('\n');
     _isOcrSource = true;
-    // Reconstruye tablas/planillas a "Nombre SxR" antes de mostrar el texto OCR.
-    final normalized = TableRoutineInterpreter.normalize(combined);
-    _textController.text =
-        normalized.trim().isEmpty ? combined : normalized;
+    _textController.text = combined;
 
     final routineName = _nameController.text.trim().isEmpty
         ? fileName.replaceAll('.pdf', '')
@@ -204,17 +206,24 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
     setState(() => _phase = _Phase.editing);
   }
 
-  Future<String> _ocrFile(String path) async {
+  Future<RecognizedText> _ocrFile(String path) async {
     final inputImage = InputImage.fromFilePath(path);
     final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
     try {
-      final result = await recognizer.processImage(inputImage);
-      return result.text;
+      return await recognizer.processImage(inputImage);
     } catch (_) {
-      return '';
+      return RecognizedText(text: '', blocks: []);
     } finally {
       recognizer.close();
     }
+  }
+
+  /// Reconstrucción geométrica de una página; fallback a texto plano.
+  String _reconstructPage(RecognizedText recognized) {
+    final grid = OcrGridReconstructor.reconstruct(recognized);
+    if (grid != null && grid.trim().isNotEmpty) return grid;
+    final normalized = TableRoutineInterpreter.normalize(recognized.text);
+    return normalized.trim().isEmpty ? recognized.text : normalized;
   }
 
   // ── Parseo desde editor de texto ───────────────────────────────────────────

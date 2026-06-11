@@ -11,6 +11,7 @@ import '../../../shared/mock_data.dart';
 import '../data/routine_parser.dart';
 import '../data/routine_store.dart';
 import '../data/table_routine_interpreter.dart';
+import '../data/ocr_grid_reconstructor.dart';
 
 enum _Phase { idle, scanning, editing, preview, saving }
 
@@ -65,24 +66,30 @@ class _ImportRoutineImageScreenState extends State<ImportRoutineImageScreen> {
       _imagePath = picked.path;
     });
 
-    final text = await _runOcr(picked.path);
+    final recognized = await _runOcr(picked.path);
 
-    // Reconstruye tablas/planillas a "Nombre SxR" antes de mostrar el texto.
-    // Si es texto libre, queda intacto.
-    final normalized = TableRoutineInterpreter.normalize(text);
-    _textController.text =
-        normalized.trim().isEmpty ? text.trim() : normalized;
+    // DEC-008: reconstruye la tabla desde la geometría (bounding boxes) de
+    // ML Kit. Si la estructura no es tabular fiable, fallback al intérprete
+    // de texto plano sobre result.text (comportamiento previo).
+    final grid = OcrGridReconstructor.reconstruct(recognized);
+    final String shown;
+    if (grid != null && grid.trim().isNotEmpty) {
+      shown = grid;
+    } else {
+      final normalized = TableRoutineInterpreter.normalize(recognized.text);
+      shown = normalized.trim().isEmpty ? recognized.text.trim() : normalized;
+    }
+    _textController.text = shown;
     setState(() => _phase = _Phase.editing);
   }
 
-  Future<String> _runOcr(String path) async {
+  Future<RecognizedText> _runOcr(String path) async {
     final inputImage = InputImage.fromFilePath(path);
     final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
     try {
-      final result = await recognizer.processImage(inputImage);
-      return result.text;
+      return await recognizer.processImage(inputImage);
     } catch (_) {
-      return '';
+      return RecognizedText(text: '', blocks: []);
     } finally {
       recognizer.close();
     }
