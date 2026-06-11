@@ -10,6 +10,7 @@ import '../../../shared/atlas_validator.dart';
 import '../../../shared/mock_data.dart';
 import '../data/routine_parser.dart';
 import '../data/routine_store.dart';
+import '../data/table_routine_interpreter.dart';
 
 enum _Phase { idle, scanning, editing, preview, saving }
 
@@ -53,7 +54,11 @@ class _ImportRoutineImageScreenState extends State<ImportRoutineImageScreen> {
 
     final text = await _runOcr(picked.path);
 
-    _textController.text = text.trim();
+    // Reconstruye tablas/planillas a "Nombre SxR" antes de mostrar el texto.
+    // Si es texto libre, queda intacto.
+    final normalized = TableRoutineInterpreter.normalize(text);
+    _textController.text =
+        normalized.trim().isEmpty ? text.trim() : normalized;
     setState(() => _phase = _Phase.editing);
   }
 

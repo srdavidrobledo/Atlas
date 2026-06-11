@@ -12,6 +12,7 @@ import '../../../shared/atlas_validator.dart';
 import '../../../shared/mock_data.dart';
 import '../data/routine_parser.dart';
 import '../data/routine_store.dart';
+import '../data/table_routine_interpreter.dart';
 
 enum _Phase { idle, extracting, ocrProcessing, editing, preview, saving }
 
@@ -83,9 +84,13 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
       return;
     }
 
-    _extractedText = text;
+    _extractedText = text; // se conserva el texto crudo para el panel de debug
 
-    final textType = AtlasValidator.classify(text);
+    // Reconstruye tablas/planillas a "Nombre SxR"; el texto libre queda intacto.
+    final normalized = TableRoutineInterpreter.normalize(text);
+    final forParse = normalized.trim().isEmpty ? text : normalized;
+
+    final textType = AtlasValidator.classify(forParse);
     if (textType != RoutineTextType.validRoutine) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -98,7 +103,7 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
       return;
     }
 
-    _goToPreview(text, name);
+    _goToPreview(forParse, name);
   }
 
   // ── Extracción de texto digital ────────────────────────────────────────────
@@ -174,7 +179,10 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
 
     final combined = pageTexts.join('\n');
     _isOcrSource = true;
-    _textController.text = combined;
+    // Reconstruye tablas/planillas a "Nombre SxR" antes de mostrar el texto OCR.
+    final normalized = TableRoutineInterpreter.normalize(combined);
+    _textController.text =
+        normalized.trim().isEmpty ? combined : normalized;
 
     final routineName = _nameController.text.trim().isEmpty
         ? fileName.replaceAll('.pdf', '')
