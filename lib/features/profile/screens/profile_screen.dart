@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/atlas_widgets.dart';
 import '../../../shared/mock_data.dart';
+import '../../onboarding/data/onboarding_store.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -71,7 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          Text(MockUser.fullName, style: AppTextStyles.displayMedium),
+          Text(OnboardingStore.data.userName, style: AppTextStyles.displayMedium),
           const SizedBox(height: 4),
           Text(
             'Miembro desde ${MockUser.memberSince}',
@@ -157,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _SettingsItem(
                   icon: Icons.emoji_events_outlined,
                   label: 'Objetivo',
-                  value: MockUser.goal,
+                  value: OnboardingStore.data.goal,
                   onTap: () => _showGoalPicker(context),
                 ),
                 const Divider(indent: 56, height: 1),
@@ -288,15 +290,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text('Objetivo', style: AppTextStyles.titleMedium),
               const SizedBox(height: 12),
               ...goals.map((g) {
-                final isActive = g == MockUser.goal;
+                final isActive = g == OnboardingStore.data.goal;
                 return ListTile(
                   title: Text(g, style: AppTextStyles.bodyLarge),
                   trailing: isActive
                       ? const Icon(Icons.check_rounded, color: AppColors.primary)
                       : null,
                   onTap: () {
-                    setState(() => MockUser.goal = g);
+                    unawaited(OnboardingStore.save(
+                      OnboardingStore.data.copyWith(goal: g),
+                    ));
                     Navigator.pop(ctx);
+                    setState(() {});
                   },
                   contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                 );

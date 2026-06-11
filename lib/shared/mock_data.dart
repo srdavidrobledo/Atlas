@@ -2,12 +2,9 @@
 // No usar Firestore ni Hive aquí
 
 class MockUser {
-  static const String name = 'David';
-  static const String fullName = 'David Robledo';
   static const String memberSince = 'Enero 2026';
   static const double currentWeight = 80.6;
   static const double targetWeight = 82.0;
-  static String goal = 'Ganar músculo';
   static const int weeklyDays = 3;
   static const int defaultRest = 90;
 }
@@ -130,156 +127,9 @@ class MockRoutine {
 }
 
 class MockData {
-  // Ejercicios por día — Push Pull Legs
-  static final List<MockExercise> _pushExercises = [
-    MockExercise(
-      name: 'Press de Banca',
-      muscle: 'Pecho · Barra',
-      sets: [
-        MockSet(kg: 75, reps: 4, rir: 2, done: true),
-        MockSet(kg: 75, reps: 4, rir: 2, done: true),
-        MockSet(kg: 75, reps: 0, rir: null, done: false),
-        MockSet(kg: 75, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 72.5,
-      prevReps: 4,
-    ),
-    MockExercise(
-      name: 'Press Inclinado',
-      muscle: 'Pecho superior · Mancuernas',
-      sets: [
-        MockSet(kg: 32, reps: 0, rir: null, done: false),
-        MockSet(kg: 32, reps: 0, rir: null, done: false),
-        MockSet(kg: 32, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 30,
-      prevReps: 10,
-    ),
-    MockExercise(
-      name: 'Aperturas',
-      muscle: 'Pecho · Mancuernas',
-      sets: [
-        MockSet(kg: 16, reps: 0, rir: null, done: false),
-        MockSet(kg: 16, reps: 0, rir: null, done: false),
-        MockSet(kg: 16, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 16,
-      prevReps: 12,
-    ),
-  ];
-
-  static final List<MockExercise> _pullExercises = [
-    MockExercise(
-      name: 'Dominadas',
-      muscle: 'Espalda · Peso corporal',
-      sets: [
-        MockSet(kg: 0, reps: 0, rir: null, done: false),
-        MockSet(kg: 0, reps: 0, rir: null, done: false),
-        MockSet(kg: 0, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 0,
-      prevReps: 8,
-    ),
-    MockExercise(
-      name: 'Remo con Barra',
-      muscle: 'Espalda · Barra',
-      sets: [
-        MockSet(kg: 70, reps: 0, rir: null, done: false),
-        MockSet(kg: 70, reps: 0, rir: null, done: false),
-        MockSet(kg: 70, reps: 0, rir: null, done: false),
-        MockSet(kg: 70, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 67.5,
-      prevReps: 6,
-    ),
-    MockExercise(
-      name: 'Curl con Barra',
-      muscle: 'Bíceps · Barra',
-      sets: [
-        MockSet(kg: 40, reps: 0, rir: null, done: false),
-        MockSet(kg: 40, reps: 0, rir: null, done: false),
-        MockSet(kg: 40, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 37.5,
-      prevReps: 10,
-    ),
-  ];
-
-  static final List<MockExercise> _legExercises = [
-    MockExercise(
-      name: 'Sentadilla',
-      muscle: 'Cuádriceps · Barra',
-      sets: [
-        MockSet(kg: 100, reps: 0, rir: null, done: false),
-        MockSet(kg: 100, reps: 0, rir: null, done: false),
-        MockSet(kg: 100, reps: 0, rir: null, done: false),
-        MockSet(kg: 100, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 97.5,
-      prevReps: 5,
-    ),
-    MockExercise(
-      name: 'Prensa de Piernas',
-      muscle: 'Cuádriceps · Máquina',
-      sets: [
-        MockSet(kg: 160, reps: 0, rir: null, done: false),
-        MockSet(kg: 160, reps: 0, rir: null, done: false),
-        MockSet(kg: 160, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 150,
-      prevReps: 10,
-    ),
-    MockExercise(
-      name: 'Extensión de Cuádriceps',
-      muscle: 'Cuádriceps · Máquina',
-      sets: [
-        MockSet(kg: 60, reps: 0, rir: null, done: false),
-        MockSet(kg: 60, reps: 0, rir: null, done: false),
-        MockSet(kg: 60, reps: 0, rir: null, done: false),
-      ],
-      prevKg: 57.5,
-      prevReps: 12,
-    ),
-  ];
-
-  static final List<MockRoutine> routines = [
-    MockRoutine(
-      id: 'r1',
-      name: 'Push Pull Legs',
-      isActive: true,
-      totalSessions: 34,
-      lastUsed: 'Hoy',
-      days: [
-        MockRoutineDay(id: 'd1', name: 'Día A — Push', exercises: _pushExercises),
-        MockRoutineDay(id: 'd2', name: 'Día B — Pull', exercises: _pullExercises),
-        MockRoutineDay(id: 'd3', name: 'Día C — Piernas', exercises: _legExercises),
-      ],
-    ),
-    MockRoutine(
-      id: 'r2',
-      name: 'Full Body',
-      isActive: false,
-      totalSessions: 12,
-      lastUsed: 'Hace 2 meses',
-      days: [
-        MockRoutineDay(id: 'd4', name: 'Full Body A', exercises: []),
-        MockRoutineDay(id: 'd5', name: 'Full Body B', exercises: []),
-      ],
-    ),
-    MockRoutine(
-      id: 'r3',
-      name: 'Upper / Lower',
-      isActive: false,
-      totalSessions: 8,
-      lastUsed: 'Hace 4 meses',
-      days: [
-        MockRoutineDay(id: 'd6', name: 'Upper A', exercises: []),
-        MockRoutineDay(id: 'd7', name: 'Lower A', exercises: []),
-        MockRoutineDay(id: 'd8', name: 'Upper B', exercises: []),
-        MockRoutineDay(id: 'd9', name: 'Lower B', exercises: []),
-      ],
-    ),
-  ];
+  // Inicia vacío. Las rutinas se cargan de Hive (RoutineStore.init)
+  // o se generan al completar el onboarding (AtlasRoutineGenerator).
+  static final List<MockRoutine> routines = [];
 
   static final List<MockRecord> records = [
     MockRecord(exercise: 'Press Inclinado', value: '72.5 kg × 4', date: 'Jun 2'),

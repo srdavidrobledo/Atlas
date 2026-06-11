@@ -1,5 +1,7 @@
 import 'package:go_router/go_router.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
+import '../../features/onboarding/data/onboarding_store.dart';
+import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/workout/screens/workout_screen.dart';
 import '../../features/workout/screens/workout_summary_screen.dart';
 import '../../features/progress/screens/progress_screen.dart';
@@ -14,9 +16,22 @@ import '../../features/nutrition/screens/nutrition_screen.dart';
 import '../../shared/widgets/atlas_bottom_nav.dart';
 import 'route_names.dart';
 
+const _onboardingPath = '/onboarding';
+
 final appRouter = GoRouter(
   initialLocation: RouteNames.dashboard,
+  redirect: (context, state) {
+    if (!OnboardingStore.isCompleted &&
+        state.matchedLocation != _onboardingPath) {
+      return _onboardingPath;
+    }
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: _onboardingPath,
+      builder: (context, state) => const OnboardingScreen(),
+    ),
     ShellRoute(
       builder: (context, state, child) => AtlasScaffold(child: child),
       routes: [

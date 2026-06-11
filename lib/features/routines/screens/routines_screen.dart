@@ -308,6 +308,23 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                           child: const Text('Activar'),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _showDeleteDialog(context, r),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 36),
+                            padding: EdgeInsets.zero,
+                            foregroundColor: AppColors.error,
+                            side: BorderSide(
+                              color: AppColors.error.withOpacity(0.5),
+                              width: 0.5,
+                            ),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                          child: const Text('Eliminar'),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -520,6 +537,35 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
             }),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, MockRoutine routine) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Eliminar rutina'),
+        content: Text(
+          '¿Eliminar "${routine.name}"? Esta acción no se puede deshacer.',
+          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await RoutineStore.deleteRoutine(routine.id);
+              if (mounted) setState(() {});
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Eliminar'),
+          ),
+        ],
       ),
     );
   }

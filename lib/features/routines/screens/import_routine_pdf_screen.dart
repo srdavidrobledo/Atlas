@@ -66,16 +66,28 @@ class _ImportRoutinePdfScreenState extends State<ImportRoutinePdfScreen> {
     if (meaningful < 40) {
       // PDF escaneado — intentar OCR
       if (kIsWeb) {
-        // ML Kit no disponible en web
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-                'PDF escaneado detectado. El OCR solo está disponible en la app móvil.'),
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 4),
-          ));
-        }
         setState(() => _phase = _Phase.idle);
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: AppColors.surface,
+              title: const Text('PDF escaneado'),
+              content: const Text(
+                'Este PDF parece ser una imagen escaneada y no contiene texto seleccionable.\n\n'
+                'Para importarlo podés:\n'
+                '  • Usar Atlas en Android\n'
+                '  • O importar la imagen directamente desde "Importar → Foto"',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Entendido'),
+                ),
+              ],
+            ),
+          );
+        }
         return;
       }
 

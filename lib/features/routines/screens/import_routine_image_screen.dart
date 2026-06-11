@@ -38,6 +38,19 @@ class _ImportRoutineImageScreenState extends State<ImportRoutineImageScreen> {
 
   // ── Captura y OCR ──────────────────────────────────────────────────────────
 
+  Future<void> _pickImageWeb() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+      maxWidth: 2000,
+    );
+    if (picked == null) return;
+    // OCR no disponible en web — ir directo a edición con texto vacío
+    _textController.text = '';
+    setState(() => _phase = _Phase.editing);
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
@@ -205,9 +218,16 @@ class _ImportRoutineImageScreenState extends State<ImportRoutineImageScreen> {
           const SizedBox(height: 8),
           _nameField(),
           const SizedBox(height: 32),
-          if (isWeb)
-            _webNotice()
-          else ...[
+          if (isWeb) ...[
+            _sourceButton(
+              icon: Icons.image_search_rounded,
+              label: 'Seleccionar imagen',
+              subtitle: 'Elige una imagen desde tu dispositivo',
+              onTap: _pickImageWeb,
+            ),
+            const SizedBox(height: 16),
+            _webOcrNotice(),
+          ] else ...[
             _sourceButton(
               icon: Icons.camera_alt_rounded,
               label: 'Tomar foto',
@@ -292,21 +312,23 @@ class _ImportRoutineImageScreenState extends State<ImportRoutineImageScreen> {
     );
   }
 
-  Widget _webNotice() {
+  Widget _webOcrNotice() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF3F3F46), width: 0.5),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('📱', style: TextStyle(fontSize: 28)),
-          const SizedBox(width: 14),
+          const Text('ℹ️', style: TextStyle(fontSize: 20)),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'La importación por foto solo está disponible en la app móvil (Android e iOS).',
+              'El reconocimiento de texto (OCR) no está disponible en web. '
+              'Podés seleccionar una imagen y escribir el texto de la rutina manualmente.',
               style: AppTextStyles.bodySmall.copyWith(height: 1.5),
             ),
           ),

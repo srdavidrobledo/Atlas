@@ -266,6 +266,7 @@ class AtlasNumberPicker extends StatelessWidget {
   final String? unit;
   final ValueChanged<double> onChanged;
   final bool showDecimals;
+  final VoidCallback? onTapValue;
 
   const AtlasNumberPicker({
     super.key,
@@ -276,6 +277,7 @@ class AtlasNumberPicker extends StatelessWidget {
     this.max = 999,
     this.unit,
     this.showDecimals = false,
+    this.onTapValue,
   });
 
   @override
@@ -297,24 +299,31 @@ class AtlasNumberPicker extends StatelessWidget {
             },
           ),
           Expanded(
-            child: Center(
-              child: RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: showDecimals
-                          ? value.toStringAsFixed(1)
-                          : value.toInt().toString(),
-                      style: AppTextStyles.numericLarge,
-                    ),
-                    if (unit != null)
+            child: GestureDetector(
+              onTap: onTapValue,
+              child: Center(
+                child: RichText(
+                  text: TextSpan(
+                    children: [
                       TextSpan(
-                        text: ' $unit',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textSecondary,
+                        text: showDecimals
+                            ? value.toStringAsFixed(1)
+                            : value.toInt().toString(),
+                        style: AppTextStyles.numericLarge.copyWith(
+                          decoration: onTapValue != null ? TextDecoration.underline : null,
+                          decorationColor: AppColors.textSecondary,
+                          decorationStyle: TextDecorationStyle.dotted,
                         ),
                       ),
-                  ],
+                      if (unit != null)
+                        TextSpan(
+                          text: ' $unit',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),

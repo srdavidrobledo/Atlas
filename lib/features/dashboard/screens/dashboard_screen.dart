@@ -6,6 +6,7 @@ import '../../../core/router/route_names.dart';
 import '../../../shared/widgets/atlas_widgets.dart';
 import '../../../shared/mock_data.dart';
 import '../../../shared/atlas_coach.dart';
+import '../../onboarding/data/onboarding_store.dart';
 import '../../workout/data/workout_session_store.dart';
 import '../../nutrition/data/nutrition_store.dart';
 
@@ -116,7 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(MockUser.name, style: AppTextStyles.displayMedium),
+                Text(OnboardingStore.data.userName, style: AppTextStyles.displayMedium),
               ],
             ),
           ),
@@ -130,7 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             child: Text(
-              MockUser.goal,
+              OnboardingStore.data.goal,
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.secondary,
                 fontSize: 11,

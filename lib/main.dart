@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'core/router/app_router.dart';
 import 'core/storage/atlas_storage.dart';
 import 'core/theme/app_theme.dart';
+import 'features/onboarding/data/onboarding_store.dart';
 import 'features/routines/data/routine_store.dart';
 import 'features/workout/data/workout_session_store.dart';
 
@@ -12,6 +13,11 @@ void main() async {
   await AtlasStorage.init();
   await WorkoutSessionStore.init();
   await RoutineStore.init();
+  await OnboardingStore.init();
+  await OnboardingStore.migrateIfNeeded(
+    hasUserRoutines: RoutineStore.all.any((r) => r.id.startsWith('r_')),
+    hasSessions: WorkoutSessionStore.sessions.isNotEmpty,
+  );
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

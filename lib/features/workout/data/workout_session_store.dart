@@ -22,9 +22,9 @@ class WorkoutSessionStore {
     await AtlasStorage.sessions.put('all', jsonEncode(sessions.map((s) => s.toJson()).toList()));
   }
 
-  // Fuente única de verdad para rutina y día seleccionados
-  static MockRoutine activeRoutine =
-      MockData.routines.firstWhere((r) => r.isActive);
+  // Fuente única de verdad para rutina y día seleccionados.
+  // Inicializado por RoutineStore.init() o activateRoutine() — nunca antes.
+  static late MockRoutine activeRoutine;
 
   static MockRoutineDay? _activeDay;
 

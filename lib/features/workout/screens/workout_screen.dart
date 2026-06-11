@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/router/route_names.dart';
+import '../../../core/storage/atlas_storage.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/mock_data.dart';
@@ -63,6 +65,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     super.initState();
     _session = WorkoutSessionStore.ensureSession();
     _elapsedSeconds = _session.elapsedSeconds;
+    _restTotal = (AtlasStorage.settings.get('rest_total') as int?) ?? 90;
+    _weightStep = (AtlasStorage.settings.get('weight_step') as double?) ?? 2.5;
     if (_session.started) {
       _phase = _WorkoutPhase.active;
       _inDayView = false;
@@ -106,6 +110,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         } else {
           _restFinished = true;
           _restTimer?.cancel();
+          HapticFeedback.vibrate();
         }
       });
     });
@@ -851,6 +856,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 unit: 'kg',
                 showDecimals: true,
                 onChanged: (value) => setState(() => _currentKg = value),
+                onTapValue: () => _showValueDialog(
+                  label: 'Peso',
+                  initialValue: _currentKg,
+                  isDecimal: true,
+                  unit: 'kg',
+                  onSave: (v) => setState(() => _currentKg = v.clamp(0, 400)),
+                ),
               ),
             ],
           ),
@@ -874,6 +886,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 min: 1,
                 max: 99,
                 onChanged: (value) => setState(() => _currentReps = value.toInt()),
+                onTapValue: () => _showValueDialog(
+                  label: 'Repeticiones',
+                  initialValue: _currentReps.toDouble(),
+                  isDecimal: false,
+                  onSave: (v) => setState(() => _currentReps = v.toInt().clamp(1, 99)),
+                ),
               ),
             ],
           ),
@@ -883,12 +901,81 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   Widget _buildWeightStepSelector() {
-    return _OptionSelector<double>(
-      label: 'INCREMENTO DE PESO',
-      options: const [1, 2.5, 5],
-      selected: _weightStep,
-      labelFor: (value) => '${value.toStringAsFixed(value == value.roundToDouble() ? 0 : 1)} kg',
-      onChanged: (value) => setState(() => _weightStep = value),
+    const presets = [0.5, 1.0, 1.25, 2.5, 5.0];
+    final isCustom = !presets.contains(_weightStep);
+
+    String stepLabel(double v) {
+      if (v == v.roundToDouble()) return '${v.toInt()} kg';
+      return '${v.toStringAsFixed(v == 1.25 ? 2 : 1)} kg';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'INCREMENTO DE PESO',
+          style: AppTextStyles.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+            letterSpacing: 1.0,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ...presets.map((option) {
+              final isSelected = option == _weightStep;
+              return ChoiceChip(
+                selected: isSelected,
+                label: Text(stepLabel(option)),
+                onSelected: (_) {
+                  setState(() => _weightStep = option);
+                  AtlasStorage.settings.put('weight_step', option);
+                },
+                labelStyle: AppTextStyles.bodySmall.copyWith(
+                  color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+                selectedColor: AppColors.primary,
+                backgroundColor: AppColors.surface,
+                side: BorderSide(
+                  color: isSelected ? AppColors.primaryLight : const Color(0xFF3F3F46),
+                  width: isSelected ? 1.2 : 0.5,
+                ),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              );
+            }),
+            ChoiceChip(
+              selected: isCustom,
+              label: Text(isCustom ? stepLabel(_weightStep) : 'Otro'),
+              onSelected: (_) => _showValueDialog(
+                label: 'Incremento de peso',
+                initialValue: _weightStep,
+                isDecimal: true,
+                unit: 'kg',
+                onSave: (v) {
+                  if (v > 0) {
+                    setState(() => _weightStep = v);
+                    AtlasStorage.settings.put('weight_step', v);
+                  }
+                },
+              ),
+              labelStyle: AppTextStyles.bodySmall.copyWith(
+                color: isCustom ? AppColors.textPrimary : AppColors.textSecondary,
+                fontWeight: isCustom ? FontWeight.w700 : FontWeight.w500,
+              ),
+              selectedColor: AppColors.primary,
+              backgroundColor: AppColors.surface,
+              side: BorderSide(
+                color: isCustom ? AppColors.primaryLight : const Color(0xFF3F3F46),
+                width: isCustom ? 1.2 : 0.5,
+              ),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -913,12 +1000,40 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   Widget _buildRestSelector() {
-    return _OptionSelector<int>(
-      label: 'DESCANSO ENTRE SERIES',
-      options: const [60, 90, 120, 180],
-      selected: _restTotal,
-      labelFor: (value) => '${value}s',
-      onChanged: _setRestTotal,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'DESCANSO ENTRE SERIES',
+          style: AppTextStyles.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+            letterSpacing: 1.0,
+          ),
+        ),
+        const SizedBox(height: 8),
+        AtlasNumberPicker(
+          value: _restTotal.toDouble(),
+          step: 15,
+          min: 15,
+          max: 600,
+          unit: 's',
+          onChanged: (v) {
+            _setRestTotal(v.toInt());
+            AtlasStorage.settings.put('rest_total', v.toInt());
+          },
+          onTapValue: () => _showValueDialog(
+            label: 'Descanso',
+            initialValue: _restTotal.toDouble(),
+            isDecimal: false,
+            unit: 's',
+            onSave: (v) {
+              final secs = v.toInt().clamp(15, 600);
+              _setRestTotal(secs);
+              AtlasStorage.settings.put('rest_total', secs);
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -1029,6 +1144,55 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
+  void _showValueDialog({
+    required String label,
+    required double initialValue,
+    required ValueChanged<double> onSave,
+    bool isDecimal = false,
+    String? unit,
+  }) {
+    final controller = TextEditingController(
+      text: isDecimal
+          ? initialValue.toStringAsFixed(1)
+          : initialValue.toInt().toString(),
+    );
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(label),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
+          decoration: InputDecoration(
+            suffixText: unit,
+            border: const OutlineInputBorder(),
+          ),
+          onSubmitted: (_) {
+            final v = double.tryParse(controller.text.replaceAll(',', '.'));
+            if (v != null) onSave(v);
+            Navigator.pop(ctx);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final v = double.tryParse(controller.text.replaceAll(',', '.'));
+              if (v != null) onSave(v);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showExitDialog() {
     final title = _hasStarted || _session.completedSets > 0
         ? 'Tienes un entrenamiento en curso'
@@ -1061,62 +1225,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _OptionSelector<T> extends StatelessWidget {
-  final String label;
-  final List<T> options;
-  final T selected;
-  final String Function(T value) labelFor;
-  final ValueChanged<T> onChanged;
-
-  const _OptionSelector({
-    required this.label,
-    required this.options,
-    required this.selected,
-    required this.labelFor,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: AppTextStyles.labelSmall.copyWith(
-            color: AppColors.textSecondary,
-            letterSpacing: 1.0,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: options.map((option) {
-            final isSelected = option == selected;
-            return ChoiceChip(
-              selected: isSelected,
-              label: Text(labelFor(option)),
-              onSelected: (_) => onChanged(option),
-              labelStyle: AppTextStyles.bodySmall.copyWith(
-                color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              ),
-              selectedColor: AppColors.primary,
-              backgroundColor: AppColors.surface,
-              side: BorderSide(
-                color: isSelected ? AppColors.primaryLight : const Color(0xFF3F3F46),
-                width: isSelected ? 1.2 : 0.5,
-              ),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            );
-          }).toList(),
-        ),
-      ],
     );
   }
 }

@@ -10,8 +10,9 @@ import '../../workout/data/workout_session_store.dart';
 /// MockRoutine.isActive (final/inmutable). Cuando los modelos sean
 /// mutables este store se simplifica sin cambiar su interfaz pública.
 class RoutineStore {
-  static String _activeRoutineId =
-      MockData.routines.firstWhere((r) => r.isActive).id;
+  // Null hasta que RoutineStore.init() restaure el ID desde Hive,
+  // o hasta que onboarding llame a activateRoutine().
+  static String? _activeRoutineId;
 
   static Future<void> init() async {
     final raw = AtlasStorage.routines.get('user_routines') as String?;
@@ -52,8 +53,18 @@ class RoutineStore {
   static List<MockRoutine> get all => MockData.routines;
 
   /// Rutina activa actual.
-  static MockRoutine get active =>
-      MockData.routines.firstWhere((r) => r.id == _activeRoutineId);
+  /// Lanza [StateError] solo si no hay ninguna rutina cargada,
+  /// situación que el router previene redirigiendo al onboarding.
+  static MockRoutine get active {
+    if (MockData.routines.isEmpty) {
+      throw StateError('No hay rutinas disponibles.');
+    }
+    if (_activeRoutineId == null) return MockData.routines.first;
+    return MockData.routines.firstWhere(
+      (r) => r.id == _activeRoutineId,
+      orElse: () => MockData.routines.first,
+    );
+  }
 
   // ── Rutinas ──────────────────────────────────────────────────────────
 
@@ -61,7 +72,7 @@ class RoutineStore {
   /// Actualiza WorkoutSessionStore para mantener sincronía.
   /// No hace nada si ya es la rutina activa.
   static void activateRoutine(String id) {
-    if (id == _activeRoutineId) return;
+    if (_activeRoutineId == id) return;
     if (!MockData.routines.any((r) => r.id == id)) return;
     _activeRoutineId = id;
     WorkoutSessionStore.activeRoutine = active;
@@ -83,6 +94,14 @@ class RoutineStore {
     // No persistir aquí: los días se añaden después en CreateRoutineScreen.
     // persistRoutines() se llama explícitamente allí una vez completa.
     return routine;
+  }
+
+  /// Añade una rutina pre-construida (e.g. generada por AtlasRoutineGenerator).
+  /// No hace nada si ya existe una rutina con el mismo ID.
+  static Future<void> addRoutine(MockRoutine routine) async {
+    if (MockData.routines.any((r) => r.id == routine.id)) return;
+    MockData.routines.add(routine);
+    await persistRoutines();
   }
 
   static Future<void> deleteRoutine(String id) async {
